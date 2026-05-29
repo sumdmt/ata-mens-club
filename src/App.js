@@ -2,6 +2,7 @@ import "./App.css";
 import { useEffect, useState } from "react";
 import Admin from "./pages/Admin";
 
+const API_URL = "https://ata-mens-club.onrender.com";
 function App() {
   const [showAdmin, setShowAdmin] = useState(false);
 
@@ -83,7 +84,7 @@ function App() {
 
   const getAppointments = async () => {
     try {
-      const response = await fetch("http://localhost:5000/api/appointments");
+      const response = await fetch(`${API_URL}/api/appointments`);
       const data = await response.json();
 
       setAppointments(Array.isArray(data) ? data : []);
@@ -95,7 +96,7 @@ function App() {
 
   const getBlockedSlots = async () => {
     try {
-      const response = await fetch("http://localhost:5000/api/blocked-slots");
+      const response = await fetch(`${API_URL}/api/blocked-slots`);
       const data = await response.json();
 
       setBlockedSlots(Array.isArray(data) ? data : []);
@@ -239,7 +240,7 @@ function App() {
     }
 
     try {
-      const response = await fetch("http://localhost:5000/api/appointments", {
+      const response = await fetch(`${API_URL}/api/appointments`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
