@@ -364,6 +364,12 @@ function Admin({ onBack }) {
                 </p>
               )}
 
+              {item.totalPrice && (
+  <p>
+    <strong>Ücret:</strong> {item.totalPrice} TL
+  </p>
+)}
+
               <button
                 className="delete-btn"
                 onClick={() => deleteAppointment(item._id)}

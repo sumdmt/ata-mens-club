@@ -30,15 +30,16 @@ app.get("/", (req, res) => {
 app.post("/api/appointments", async (req, res) => {
   try {
     const {
-      name,
-      phone,
-      employee,
-      service,
-      totalDuration,
-      date,
-      time,
-      endTime,
-    } = req.body;
+  name,
+  phone,
+  employee,
+  service,
+  totalDuration,
+  totalPrice,
+  date,
+  time,
+  endTime,
+} = req.body;
 
     if (
       !name ||
@@ -94,15 +95,16 @@ app.post("/api/appointments", async (req, res) => {
     }
 
     const appointment = await Appointment.create({
-      name,
-      phone,
-      employee,
-      service,
-      totalDuration,
-      date,
-      time,
-      endTime,
-    });
+  name,
+  phone,
+  employee,
+  service,
+  totalDuration,
+  totalPrice,
+  date,
+  time,
+  endTime,
+});
 
     res.status(201).json({
       message: "Randevu başarıyla kaydedildi.",
