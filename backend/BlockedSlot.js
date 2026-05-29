@@ -1,29 +1,9 @@
 const mongoose = require("mongoose");
 
-const appointmentSchema = new mongoose.Schema(
+const blockedSlotSchema = new mongoose.Schema(
   {
-    name: {
-      type: String,
-      required: true,
-    },
-
-    phone: {
-      type: String,
-      required: true,
-    },
-
     employee: {
       type: String,
-      required: true,
-    },
-
-    service: {
-      type: [String],
-      required: true,
-    },
-
-    totalDuration: {
-      type: Number,
       required: true,
     },
 
@@ -32,7 +12,7 @@ const appointmentSchema = new mongoose.Schema(
       required: true,
     },
 
-    time: {
+    startTime: {
       type: String,
       required: true,
     },
@@ -41,6 +21,11 @@ const appointmentSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
+
+    reason: {
+      type: String,
+      default: "Kapalı saat",
+    },
   },
   {
     timestamps: true,
@@ -48,6 +33,6 @@ const appointmentSchema = new mongoose.Schema(
 );
 
 module.exports = mongoose.model(
-  "Appointment",
-  appointmentSchema
+  "BlockedSlot",
+  blockedSlotSchema
 );

@@ -138,24 +138,6 @@ select {
   background-image: none;
 }
 
-input[type="date"] {
-  appearance: none;
-  -webkit-appearance: none;
-}
-
-input,
-select,
-.multi-select-header,
-.time-select-header {
-  height: 58px;
-  line-height: 58px;
-  padding: 0 18px;
-}
-
-select {
-  display: block;
-}
-
 .multi-select,
 .time-select {
   position: relative;
@@ -166,11 +148,6 @@ select {
 .time-select-header {
   justify-content: space-between;
   cursor: pointer;
-}
-
-.dropdown-arrow,
-.time-arrow {
-  display: none;
 }
 
 .multi-select-options,
@@ -192,10 +169,6 @@ select {
   border-bottom: 1px solid #f0e2bd;
 }
 
-.multi-option:last-child {
-  border-bottom: none;
-}
-
 .multi-option:hover {
   background: #fff2cb;
 }
@@ -203,10 +176,6 @@ select {
 .selected-option {
   background: #111;
   color: #d6b75a;
-}
-
-.service-info strong {
-  font-weight: 500;
 }
 
 .time-select-options {
@@ -257,8 +226,6 @@ button:hover {
 
 .booked-time:hover {
   transform: none !important;
-  background: #e5e5e5 !important;
-  color: #999 !important;
 }
 
 .secure-box {
@@ -282,11 +249,6 @@ button:hover {
   color: #d6b75a;
   font-size: 17px;
   font-weight: 800;
-}
-
-.submit-btn:hover {
-  background: #111;
-  color: #d6b75a;
 }
 
 .summary-card ul {
@@ -315,7 +277,6 @@ button:hover {
   background: white;
   font-weight: 700;
   font-size: 17px;
-  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.04);
 }
 
 .message-box {
@@ -338,6 +299,190 @@ button:hover {
   border: 1px solid #f0a6a0;
 }
 
+/* ADMIN PANEL */
+
+.admin-page {
+  min-height: 100vh;
+  background: #f6f1e7;
+  padding: 24px;
+}
+
+.admin-page h1 {
+  font-size: 36px;
+  margin-bottom: 24px;
+  color: #111;
+}
+
+.back-btn,
+.admin-open-btn,
+.filter-clear-btn {
+  border: 1px solid #d4af37;
+  background: white;
+  color: #111;
+  padding: 12px 18px;
+  border-radius: 14px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.back-btn {
+  margin-bottom: 24px;
+}
+
+.admin-open-btn {
+  margin-top: 20px;
+}
+
+.back-btn:hover,
+.admin-open-btn:hover,
+.filter-clear-btn:hover {
+  background: #111;
+  color: #d4af37;
+}
+
+.admin-login-card {
+  max-width: 420px;
+  background: white;
+  border: 1px solid #d4af37;
+  border-radius: 24px;
+  padding: 32px;
+}
+
+.admin-login-card h1 {
+  font-size: 32px;
+}
+
+.admin-login-error {
+  color: #b00020;
+  font-weight: 700;
+  margin-top: 12px;
+}
+
+.admin-filter-box {
+  display: flex;
+  align-items: end;
+  gap: 16px;
+  background: white;
+  border: 1px solid #d4af37;
+  border-radius: 22px;
+  padding: 18px;
+  margin-bottom: 18px;
+  flex-wrap: wrap;
+}
+
+.admin-filter-box input,
+.admin-filter-box select {
+  min-width: 220px;
+  height: 46px;
+  border-radius: 14px;
+}
+
+.filter-clear-btn {
+  height: 46px;
+  padding: 0 18px;
+}
+
+.admin-count {
+  margin-bottom: 18px;
+  font-weight: 700;
+}
+
+.blocked-slot-box {
+  background: white;
+  border: 1px solid #d4af37;
+  border-radius: 22px;
+  padding: 20px;
+  margin: 20px 0;
+}
+
+.blocked-slot-box h2 {
+  margin-bottom: 16px;
+}
+
+.blocked-slot-form {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  gap: 12px;
+  align-items: center;
+}
+
+.blocked-slot-form input,
+.blocked-slot-form select,
+.blocked-slot-form button {
+  width: 100%;
+  height: 46px;
+  border-radius: 14px;
+}
+
+.blocked-slot-form button {
+  background: #111;
+  color: #d4af37;
+  border: none;
+}
+
+.blocked-slot-list {
+  margin-top: 18px;
+  display: grid;
+  gap: 12px;
+}
+
+.blocked-slot-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  background: #f6f1e7;
+  border: 1px solid #d4af37;
+  border-radius: 14px;
+  padding: 12px;
+  font-size: 14px;
+}
+
+.blocked-slot-card button {
+  background: #111;
+  color: #d4af37;
+  padding: 8px 14px;
+  border-radius: 10px;
+  border: none;
+}
+
+.admin-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 300px));
+  gap: 18px;
+}
+
+.admin-card {
+  background: white;
+  border: 1px solid #d4af37;
+  border-radius: 22px;
+  padding: 20px;
+  max-width: 300px;
+}
+
+.admin-card h3 {
+  font-size: 24px;
+  margin-bottom: 12px;
+}
+
+.admin-card p {
+  margin-bottom: 8px;
+  color: #333;
+  font-size: 14px;
+}
+
+.delete-btn {
+  margin-top: 16px;
+  width: 100%;
+  height: 44px;
+  border: none;
+  background: #111;
+  color: #d4af37;
+  border-radius: 14px;
+  font-size: 14px;
+  font-weight: 700;
+}
+
 @media (max-width: 1000px) {
   .layout {
     max-width: 720px;
@@ -355,8 +500,9 @@ button:hover {
 }
 
 @media (max-width: 768px) {
-  .page {
-    padding: 10px;
+  .page,
+  .admin-page {
+    padding: 12px;
   }
 
   .hero {
@@ -380,14 +526,6 @@ button:hover {
     gap: 16px;
   }
 
-  .form-card {
-    order: 1;
-  }
-
-  .summary-card {
-    order: 2;
-  }
-
   .form-card,
   .summary-card {
     width: 100%;
@@ -395,20 +533,20 @@ button:hover {
     border-radius: 24px;
   }
 
-  input,
-  select,
-  button,
-  .multi-select-header,
-  .time-select-header {
-    font-size: 16px;
-  }
-
   .time-select-options {
     grid-template-columns: repeat(3, 1fr);
   }
 
-  .info-card {
-    padding: 16px;
-    font-size: 15px;
+  .admin-list {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-card {
+    max-width: 100%;
+  }
+
+  .blocked-slot-card {
+    flex-direction: column;
+    align-items: flex-start;
   }
 }

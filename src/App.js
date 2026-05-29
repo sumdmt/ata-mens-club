@@ -1,7 +1,10 @@
 import "./App.css";
 import { useEffect, useState } from "react";
+import Admin from "./pages/Admin";
 
 function App() {
+  const [showAdmin, setShowAdmin] = useState(false);
+
   const employees = [
     {
       name: "Bilal Ata",
@@ -60,6 +63,7 @@ function App() {
   ];
 
   const [appointments, setAppointments] = useState([]);
+  const [blockedSlots, setBlockedSlots] = useState([]);
 
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
@@ -73,31 +77,39 @@ function App() {
   const [success, setSuccess] = useState(false);
 
   useEffect(() => {
-    const getAppointments = async () => {
-      try {
-        const response = await fetch(
-          "http://localhost:5000/api/appointments"
-        );
-
-        const data = await response.json();
-
-        setAppointments(data);
-      } catch (error) {
-        console.log("Randevular alınamadı", error);
-      }
-    };
-
     getAppointments();
+    getBlockedSlots();
   }, []);
 
-  const selectedEmployee = employees.find(
-    (person) => person.name === employee
-  );
+  const getAppointments = async () => {
+    try {
+      const response = await fetch("http://localhost:5000/api/appointments");
+      const data = await response.json();
+
+      setAppointments(Array.isArray(data) ? data : []);
+    } catch (error) {
+      console.log("Randevular alınamadı", error);
+      setAppointments([]);
+    }
+  };
+
+  const getBlockedSlots = async () => {
+    try {
+      const response = await fetch("http://localhost:5000/api/blocked-slots");
+      const data = await response.json();
+
+      setBlockedSlots(Array.isArray(data) ? data : []);
+    } catch (error) {
+      console.log("Kapalı saatler alınamadı", error);
+      setBlockedSlots([]);
+    }
+  };
+
+  const selectedEmployee = employees.find((person) => person.name === employee);
 
   const selectedServices =
-    selectedEmployee?.services.filter((item) =>
-      service.includes(item.name)
-    ) || [];
+    selectedEmployee?.services.filter((item) => service.includes(item.name)) ||
+    [];
 
   const totalDuration = selectedServices.reduce(
     (total, item) => total + item.duration,
@@ -106,16 +118,13 @@ function App() {
 
   const generateTimes = () => {
     const list = [];
-
     let hour = 8;
     let minute = 0;
 
     while (hour < 22) {
-      const formattedHour = String(hour).padStart(2, "0");
-
-      const formattedMinute = String(minute).padStart(2, "0");
-
-      list.push(`${formattedHour}:${formattedMinute}`);
+      list.push(
+        `${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")}`
+      );
 
       minute += 15;
 
@@ -131,140 +140,155 @@ function App() {
   const times = generateTimes();
 
   const timeToMinutes = (timeValue) => {
-  const [hour, minute] = timeValue.split(":").map(Number);
-  return hour * 60 + minute;
-};
+    const [hour, minute] = timeValue.split(":").map(Number);
+    return hour * 60 + minute;
+  };
 
-const isTimeBooked = (selectedTime) => {
-  if (!employee || !date || totalDuration === 0) {
-    return false;
-  }
+  const isTimeBooked = (selectedTime) => {
+    if (!employee || !date || totalDuration === 0) return false;
 
-  const selectedStart = timeToMinutes(selectedTime);
-  const selectedEnd = selectedStart + totalDuration;
+    const selectedStart = timeToMinutes(selectedTime);
+    const selectedEnd = selectedStart + totalDuration;
 
-  return appointments.some((item) => {
-    if (item.employee !== employee || item.date !== date) {
-      return false;
-    }
+    const appointmentConflict = appointments.some((item) => {
+      if (item.employee !== employee || item.date !== date) return false;
 
-    const bookedStart = timeToMinutes(item.time);
-    const bookedEnd = bookedStart + Number(item.totalDuration || 0);
+      const bookedStart = timeToMinutes(item.time);
+      const bookedEnd = bookedStart + Number(item.totalDuration || 0);
 
-    return selectedStart < bookedEnd && selectedEnd > bookedStart;
-  });
-};
+      return selectedStart < bookedEnd && selectedEnd > bookedStart;
+    });
+
+    const blockedConflict = blockedSlots.some((slot) => {
+      if (slot.employee !== employee || slot.date !== date) return false;
+
+      const blockedStart = timeToMinutes(slot.startTime);
+      const blockedEnd = timeToMinutes(slot.endTime);
+
+      return selectedStart < blockedEnd && selectedEnd > blockedStart;
+    });
+
+    return appointmentConflict || blockedConflict;
+  };
 
   const calculateEndTime = (startTime, duration) => {
     if (!startTime || !duration) return "-";
 
     const [hour, minute] = startTime.split(":").map(Number);
-
     const startDate = new Date();
 
     startDate.setHours(hour);
     startDate.setMinutes(minute);
     startDate.setSeconds(0);
-
     startDate.setMinutes(startDate.getMinutes() + duration);
 
-    const endHour = String(startDate.getHours()).padStart(2, "0");
-
-    const endMinute = String(startDate.getMinutes()).padStart(2, "0");
-
-    return `${endHour}:${endMinute}`;
+    return `${String(startDate.getHours()).padStart(2, "0")}:${String(
+      startDate.getMinutes()
+    ).padStart(2, "0")}`;
   };
 
   const endTime = calculateEndTime(time, totalDuration);
 
+  const today = new Date().toISOString().split("T")[0];
+
+  const isSunday = (selectedDate) => {
+    if (!selectedDate) return false;
+    return new Date(selectedDate).getDay() === 0;
+  };
+
+  const clearMessageAfterDelay = () => {
+    setTimeout(() => {
+      setMessage("");
+      setSuccess(false);
+    }, 3000);
+  };
+
+  const resetForm = () => {
+    setName("");
+    setPhone("");
+    setEmployee("");
+    setService([]);
+    setIsServiceOpen(false);
+    setIsTimeOpen(false);
+    setDate("");
+    setTime("");
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (
-      !name ||
-      !phone ||
-      !employee ||
-      service.length === 0 ||
-      !date ||
-      !time
-    ) {
+    if (!name || !phone || !employee || service.length === 0 || !date || !time) {
       setSuccess(false);
-
       setMessage("Lütfen tüm alanları doldurun.");
-
+      clearMessageAfterDelay();
       return;
     }
 
     if (!/^05\d{9}$/.test(phone)) {
-  setSuccess(false);
-  setMessage(
-    "Telefon numarası 05 ile başlamalı ve 11 haneli olmalıdır."
-  );
-  return;
-}
-    
+      setSuccess(false);
+      setMessage("Telefon numarası 05 ile başlamalı ve 11 haneli olmalıdır.");
+      clearMessageAfterDelay();
+      return;
+    }
+
+    if (isTimeBooked(time)) {
+      setSuccess(false);
+      setMessage("Bu saat dolu veya kapalı. Lütfen başka bir saat seçin.");
+      clearMessageAfterDelay();
+      return;
+    }
+
     try {
-      const response = await fetch(
-        "http://localhost:5000/api/appointments",
-        {
-          method: "POST",
-
-          headers: {
-            "Content-Type": "application/json",
-          },
-
-          body: JSON.stringify({
-            name,
-            phone,
-            employee,
-            service,
-            totalDuration,
-            date,
-            time,
-            endTime,
-          }),
-        }
-      );
+      const response = await fetch("http://localhost:5000/api/appointments", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          name,
+          phone,
+          employee,
+          service,
+          totalDuration,
+          date,
+          time,
+          endTime,
+        }),
+      });
 
       const data = await response.json();
 
       if (response.ok) {
         setSuccess(true);
-
         setMessage("Randevunuz başarıyla oluşturuldu.");
-        setTimeout(() => {
-  setMessage("");
-  setSuccess(false);
-}, 3000);
 
-        setAppointments([
-          ...appointments,
-          {
-            employee,
-            date,
-            time,
-          },
-        ]);
+        setAppointments((prev) => [data.appointment, ...prev]);
 
-        setName("");
-        setPhone("");
-        setEmployee("");
-        setService([]);
-        setIsServiceOpen(false);
-        setIsTimeOpen(false);
-        setDate("");
-        setTime("");
+        resetForm();
+        clearMessageAfterDelay();
       } else {
         setSuccess(false);
-
         setMessage(data.message || "Bir hata oluştu.");
+        clearMessageAfterDelay();
       }
     } catch (error) {
       setSuccess(false);
-
       setMessage("Sunucu bağlantı hatası.");
+      clearMessageAfterDelay();
     }
   };
+
+  if (showAdmin) {
+    return (
+      <Admin
+        onBack={() => {
+          setShowAdmin(false);
+          getAppointments();
+          getBlockedSlots();
+        }}
+      />
+    );
+  }
 
   return (
     <div className="page">
@@ -275,6 +299,14 @@ const isTimeBooked = (selectedTime) => {
               <h1>ATA</h1>
               <p>MEN'S CLUB</p>
             </div>
+
+            <button
+              type="button"
+              className="admin-open-btn"
+              onClick={() => setShowAdmin(true)}
+            >
+              Admin Panel
+            </button>
           </div>
         </div>
       </header>
@@ -283,9 +315,7 @@ const isTimeBooked = (selectedTime) => {
         <div className="form-card">
           <h2>Randevu Oluştur</h2>
 
-          <p className="subtitle">
-            Lütfen bilgilerinizi eksiksiz doldurun.
-          </p>
+          <p className="subtitle">Lütfen bilgilerinizi eksiksiz doldurun.</p>
 
           <form onSubmit={handleSubmit}>
             <label>Ad Soyad</label>
@@ -299,17 +329,16 @@ const isTimeBooked = (selectedTime) => {
 
             <label>Telefon Numaranız</label>
 
-            
-          <input
-  type="tel"
-  placeholder="0555 555 55 55"
-  value={phone}
-  maxLength={11}
-  onChange={(e) => {
-    const onlyNumbers = e.target.value.replace(/\D/g, "");
-    setPhone(onlyNumbers);
-  }}
-/>
+            <input
+              type="tel"
+              placeholder="0555 555 55 55"
+              value={phone}
+              maxLength={11}
+              onChange={(e) => {
+                const onlyNumbers = e.target.value.replace(/\D/g, "");
+                setPhone(onlyNumbers);
+              }}
+            />
 
             <label>Çalışan Seçimi</label>
 
@@ -317,13 +346,9 @@ const isTimeBooked = (selectedTime) => {
               value={employee}
               onChange={(e) => {
                 setEmployee(e.target.value);
-
                 setService([]);
-
                 setIsServiceOpen(false);
-
                 setTime("");
-
                 setIsTimeOpen(false);
               }}
             >
@@ -354,8 +379,6 @@ const isTimeBooked = (selectedTime) => {
                     ? "İşlem seçiniz"
                     : "Önce çalışan seçiniz"}
                 </span>
-
-              
               </div>
 
               {isServiceOpen && selectedEmployee && (
@@ -370,15 +393,12 @@ const isTimeBooked = (selectedTime) => {
                       }
                       onClick={() => {
                         if (service.includes(item.name)) {
-                          setService(
-                            service.filter((s) => s !== item.name)
-                          );
+                          setService(service.filter((s) => s !== item.name));
                         } else {
                           setService([...service, item.name]);
                         }
 
                         setTime("");
-
                         setIsTimeOpen(false);
                         setIsServiceOpen(false);
                       }}
@@ -387,9 +407,7 @@ const isTimeBooked = (selectedTime) => {
                         <strong>{item.name}</strong>
                       </div>
 
-                      <span>
-                        {service.includes(item.name) ? "✓" : ""}
-                      </span>
+                      <span>{service.includes(item.name) ? "✓" : ""}</span>
                     </div>
                   ))}
                 </div>
@@ -401,11 +419,24 @@ const isTimeBooked = (selectedTime) => {
             <input
               type="date"
               value={date}
+              min={today}
               onChange={(e) => {
-                setDate(e.target.value);
+                const selectedDate = e.target.value;
 
+                if (isSunday(selectedDate)) {
+                  setSuccess(false);
+                  setMessage(
+                    "Pazar günleri kapalıyız. Lütfen başka bir tarih seçin."
+                  );
+                  setDate("");
+                  setTime("");
+                  setIsTimeOpen(false);
+                  clearMessageAfterDelay();
+                  return;
+                }
+
+                setDate(selectedDate);
                 setTime("");
-
                 setIsTimeOpen(false);
               }}
             />
@@ -418,8 +449,6 @@ const isTimeBooked = (selectedTime) => {
                 onClick={() => setIsTimeOpen(!isTimeOpen)}
               >
                 <span>{time || "Saat seçiniz"}</span>
-
-           
               </div>
 
               {isTimeOpen && (
@@ -433,17 +462,11 @@ const isTimeBooked = (selectedTime) => {
                         key={t}
                         disabled={booked}
                         className={
-                          booked
-                            ? "booked-time"
-                            : time === t
-                            ? "selected"
-                            : ""
+                          booked ? "booked-time" : time === t ? "selected" : ""
                         }
                         onClick={() => {
                           if (booked) return;
-
                           setTime(t);
-
                           setIsTimeOpen(false);
                         }}
                       >
@@ -465,11 +488,7 @@ const isTimeBooked = (selectedTime) => {
 
             {message && (
               <div
-                className={
-                  success
-                    ? "message-box success"
-                    : "message-box error"
-                }
+                className={success ? "message-box success" : "message-box error"}
               >
                 {message}
               </div>
@@ -495,16 +514,12 @@ const isTimeBooked = (selectedTime) => {
 
             <li>
               <strong>İşlem:</strong>{" "}
-              {service.length > 0
-                ? service.join(", ")
-                : "-"}
+              {service.length > 0 ? service.join(", ") : "-"}
             </li>
 
             <li>
               <strong>Toplam Süre:</strong>{" "}
-              {totalDuration > 0
-                ? `${totalDuration} dk`
-                : "-"}
+              {totalDuration > 0 ? `${totalDuration} dk` : "-"}
             </li>
 
             <li>
@@ -521,13 +536,8 @@ const isTimeBooked = (selectedTime) => {
           </ul>
 
           <div className="summary-info">
-            <div className="info-card">
-              🕒 08:00 - 22:00
-            </div>
-
-            <div className="info-card">
-              📅 Pazar Günleri Kapalı
-            </div>
+            <div className="info-card">🕒 08:00 - 22:00</div>
+            <div className="info-card">📅 Pazar Günleri Kapalı</div>
           </div>
         </div>
       </div>
