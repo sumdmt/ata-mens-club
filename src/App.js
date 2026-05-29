@@ -1,64 +1,64 @@
 import "./App.css";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { useEffect, useState } from "react";
 import Admin from "./pages/Admin";
 
 const API_URL = "https://ata-mens-club.onrender.com";
-function App() {
-  const [showAdmin, setShowAdmin] = useState(false);
 
+function App() {
   const employees = [
     {
       name: "Bilal Ata",
       title: "Erkek Kuaförü",
       services: [
-        { name: "Saç + Sakal", duration: 45 },
-        { name: "Sadece Saç", duration: 30 },
-        { name: "Sadece Sakal", duration: 20 },
+        { name: "Saç + Sakal", duration: 45, price: 500 },
+{ name: "Sadece Saç", duration: 30, price: 350 },
+{ name: "Sadece Sakal", duration: 20, price: 250 },
       ],
     },
     {
       name: "Yaşar Luş",
       title: "Erkek Kuaförü",
       services: [
-        { name: "Saç + Sakal", duration: 45 },
-        { name: "Sadece Saç", duration: 30 },
-        { name: "Sadece Sakal", duration: 20 },
+        { name: "Saç + Sakal", duration: 45, price: 500 },
+{ name: "Sadece Saç", duration: 30, price: 350 },
+{ name: "Sadece Sakal", duration: 20, price: 250 },
       ],
     },
     {
       name: "Adil Özel",
       title: "Erkek Kuaförü",
       services: [
-        { name: "Saç + Sakal", duration: 45 },
-        { name: "Sadece Saç", duration: 30 },
-        { name: "Sadece Sakal", duration: 20 },
+        { name: "Saç + Sakal", duration: 45, price: 500 },
+{ name: "Sadece Saç", duration: 30, price: 350 },
+{ name: "Sadece Sakal", duration: 20, price: 250 },
       ],
     },
     {
       name: "Mustafa Sünnü",
       title: "Erkek Kuaförü",
       services: [
-        { name: "Saç + Sakal", duration: 45 },
-        { name: "Sadece Saç", duration: 30 },
-        { name: "Sadece Sakal", duration: 20 },
+        { name: "Saç + Sakal", duration: 45, price: 500 },
+{ name: "Sadece Saç", duration: 30, price: 350 },
+{ name: "Sadece Sakal", duration: 20, price: 250 },
       ],
     },
     {
       name: "Murat Hakikat",
       title: "Erkek Kuaförü",
       services: [
-        { name: "Saç + Sakal", duration: 45 },
-        { name: "Sadece Saç", duration: 30 },
-        { name: "Sadece Sakal", duration: 20 },
+        { name: "Saç + Sakal", duration: 45, price: 500 },
+{ name: "Sadece Saç", duration: 30, price: 350 },
+{ name: "Sadece Sakal", duration: 20, price: 250 },
       ],
     },
     {
       name: "Duygu Sert",
       title: "Kadın Bakım Uzmanı",
       services: [
-        { name: "Manikür", duration: 40 },
-        { name: "Pedikür", duration: 45 },
-        { name: "Kaş Alımı", duration: 20 },
+        { name: "Manikür", duration: 40, price: 400 },
+{ name: "Pedikür", duration: 45, price: 500 },
+{ name: "Kaş Alımı", duration: 20, price: 200 },
       ],
     },
   ];
@@ -116,6 +116,11 @@ function App() {
     (total, item) => total + item.duration,
     0
   );
+
+  const totalPrice = selectedServices.reduce(
+  (total, item) => total + item.price,
+  0
+);
 
   const generateTimes = () => {
     const list = [];
@@ -245,16 +250,17 @@ function App() {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({
-          name,
-          phone,
-          employee,
-          service,
-          totalDuration,
-          date,
-          time,
-          endTime,
-        }),
+       body: JSON.stringify({
+  name,
+  phone,
+  employee,
+  service,
+  totalDuration,
+  totalPrice,
+  date,
+  time,
+  endTime,
+}),
       });
 
       const data = await response.json();
@@ -279,270 +285,269 @@ function App() {
     }
   };
 
-  if (showAdmin) {
+  const AppointmentPage = () => {
     return (
-      <Admin
-        onBack={() => {
-          setShowAdmin(false);
-          getAppointments();
-          getBlockedSlots();
-        }}
-      />
-    );
-  }
-
-  return (
-    <div className="page">
-      <header className="hero">
-        <div className="hero-overlay">
-          <div className="brand-side">
-            <div className="brand-text">
-              <h1>ATA</h1>
-              <p>MEN'S CLUB</p>
-            </div>
-
-            <button
-              type="button"
-              className="admin-open-btn"
-              onClick={() => setShowAdmin(true)}
-            >
-              Admin Panel
-            </button>
-          </div>
-        </div>
-      </header>
-
-      <div className="layout">
-        <div className="form-card">
-          <h2>Randevu Oluştur</h2>
-
-          <p className="subtitle">Lütfen bilgilerinizi eksiksiz doldurun.</p>
-
-          <form onSubmit={handleSubmit}>
-            <label>Ad Soyad</label>
-
-            <input
-              type="text"
-              placeholder="Ad Soyad"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-            />
-
-            <label>Telefon Numaranız</label>
-
-            <input
-              type="tel"
-              placeholder="0555 555 55 55"
-              value={phone}
-              maxLength={11}
-              onChange={(e) => {
-                const onlyNumbers = e.target.value.replace(/\D/g, "");
-                setPhone(onlyNumbers);
-              }}
-            />
-
-            <label>Çalışan Seçimi</label>
-
-            <select
-              value={employee}
-              onChange={(e) => {
-                setEmployee(e.target.value);
-                setService([]);
-                setIsServiceOpen(false);
-                setTime("");
-                setIsTimeOpen(false);
-              }}
-            >
-              <option value="">Çalışan Seç</option>
-
-              {employees.map((person) => (
-                <option key={person.name} value={person.name}>
-                  {person.name}
-                </option>
-              ))}
-            </select>
-
-            <label>İşlem Seçimi</label>
-
-            <div className="multi-select">
-              <div
-                className="multi-select-header"
-                onClick={() => {
-                  if (selectedEmployee) {
-                    setIsServiceOpen(!isServiceOpen);
-                  }
-                }}
-              >
-                <span>
-                  {service.length > 0
-                    ? service.join(", ")
-                    : selectedEmployee
-                    ? "İşlem seçiniz"
-                    : "Önce çalışan seçiniz"}
-                </span>
+      <div className="page">
+        <header className="hero">
+          <div className="hero-overlay">
+            <div className="brand-side">
+              <div className="brand-text">
+                <h1>ATA</h1>
+                <p>MEN'S CLUB</p>
               </div>
-
-              {isServiceOpen && selectedEmployee && (
-                <div className="multi-select-options">
-                  {selectedEmployee.services.map((item) => (
-                    <div
-                      key={item.name}
-                      className={
-                        service.includes(item.name)
-                          ? "multi-option selected-option"
-                          : "multi-option"
-                      }
-                      onClick={() => {
-                        if (service.includes(item.name)) {
-                          setService(service.filter((s) => s !== item.name));
-                        } else {
-                          setService([...service, item.name]);
-                        }
-
-                        setTime("");
-                        setIsTimeOpen(false);
-                        setIsServiceOpen(false);
-                      }}
-                    >
-                      <div className="service-info">
-                        <strong>{item.name}</strong>
-                      </div>
-
-                      <span>{service.includes(item.name) ? "✓" : ""}</span>
-                    </div>
-                  ))}
-                </div>
-              )}
             </div>
+          </div>
+        </header>
 
-            <label>Tarih</label>
+        <div className="layout">
+          <div className="form-card">
+            <h2>Randevu Oluştur</h2>
 
-            <input
-              type="date"
-              value={date}
-              min={today}
-              onChange={(e) => {
-                const selectedDate = e.target.value;
+            <p className="subtitle">Lütfen bilgilerinizi eksiksiz doldurun.</p>
 
-                if (isSunday(selectedDate)) {
-                  setSuccess(false);
-                  setMessage(
-                    "Pazar günleri kapalıyız. Lütfen başka bir tarih seçin."
-                  );
-                  setDate("");
+            <form onSubmit={handleSubmit}>
+              <label>Ad Soyad</label>
+
+              <input
+                type="text"
+                placeholder="Ad Soyad"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+              />
+
+              <label>Telefon Numaranız</label>
+
+              <input
+                type="tel"
+                placeholder="0555 555 55 55"
+                value={phone}
+                maxLength={11}
+                onChange={(e) => {
+                  const onlyNumbers = e.target.value.replace(/\D/g, "");
+                  setPhone(onlyNumbers);
+                }}
+              />
+
+              <label>Çalışan Seçimi</label>
+
+              <select
+                value={employee}
+                onChange={(e) => {
+                  setEmployee(e.target.value);
+                  setService([]);
+                  setIsServiceOpen(false);
                   setTime("");
                   setIsTimeOpen(false);
-                  clearMessageAfterDelay();
-                  return;
-                }
-
-                setDate(selectedDate);
-                setTime("");
-                setIsTimeOpen(false);
-              }}
-            />
-
-            <label>Saat Seçimi</label>
-
-            <div className="time-select">
-              <div
-                className="time-select-header"
-                onClick={() => setIsTimeOpen(!isTimeOpen)}
+                }}
               >
-                <span>{time || "Saat seçiniz"}</span>
-              </div>
+                <option value="">Çalışan Seç</option>
 
-              {isTimeOpen && (
-                <div className="time-select-options">
-                  {times.map((t) => {
-                    const booked = isTimeBooked(t);
+                {employees.map((person) => (
+                  <option key={person.name} value={person.name}>
+                    {person.name}
+                  </option>
+                ))}
+              </select>
 
-                    return (
-                      <button
-                        type="button"
-                        key={t}
-                        disabled={booked}
+              <label>İşlem Seçimi</label>
+
+              <div className="multi-select">
+                <div
+                  className="multi-select-header"
+                  onClick={() => {
+                    if (selectedEmployee) {
+                      setIsServiceOpen(!isServiceOpen);
+                    }
+                  }}
+                >
+                  <span>
+                    {service.length > 0
+                      ? service.join(", ")
+                      : selectedEmployee
+                      ? "İşlem seçiniz"
+                      : "Önce çalışan seçiniz"}
+                  </span>
+                </div>
+
+                {isServiceOpen && selectedEmployee && (
+                  <div className="multi-select-options">
+                    {selectedEmployee.services.map((item) => (
+                      <div
+                        key={item.name}
                         className={
-                          booked ? "booked-time" : time === t ? "selected" : ""
+                          service.includes(item.name)
+                            ? "multi-option selected-option"
+                            : "multi-option"
                         }
                         onClick={() => {
-                          if (booked) return;
-                          setTime(t);
+                          if (service.includes(item.name)) {
+                            setService(service.filter((s) => s !== item.name));
+                          } else {
+                            setService([...service, item.name]);
+                          }
+
+                          setTime("");
                           setIsTimeOpen(false);
+                          setIsServiceOpen(false);
                         }}
                       >
-                        {t}
-                      </button>
+                        <div className="service-info">
+                          <strong>{item.name}</strong>
+                        </div>
+
+                        <span>{service.includes(item.name) ? "✓" : ""}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              <label>Tarih</label>
+
+              <input
+                type="date"
+                value={date}
+                min={today}
+                onChange={(e) => {
+                  const selectedDate = e.target.value;
+
+                  if (isSunday(selectedDate)) {
+                    setSuccess(false);
+                    setMessage(
+                      "Pazar günleri kapalıyız. Lütfen başka bir tarih seçin."
                     );
-                  })}
+                    setDate("");
+                    setTime("");
+                    setIsTimeOpen(false);
+                    clearMessageAfterDelay();
+                    return;
+                  }
+
+                  setDate(selectedDate);
+                  setTime("");
+                  setIsTimeOpen(false);
+                }}
+              />
+
+              <label>Saat Seçimi</label>
+
+              <div className="time-select">
+                <div
+                  className="time-select-header"
+                  onClick={() => setIsTimeOpen(!isTimeOpen)}
+                >
+                  <span>{time || "Saat seçiniz"}</span>
+                </div>
+
+                {isTimeOpen && (
+                  <div className="time-select-options">
+                    {times.map((t) => {
+                      const booked = isTimeBooked(t);
+
+                      return (
+                        <button
+                          type="button"
+                          key={t}
+                          disabled={booked}
+                          className={
+                            booked ? "booked-time" : time === t ? "selected" : ""
+                          }
+                          onClick={() => {
+                            if (booked) return;
+                            setTime(t);
+                            setIsTimeOpen(false);
+                          }}
+                        >
+                          {t}
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+
+              <div className="secure-box">
+                Bilgileriniz üçüncü kişilerle paylaşılmaz.
+              </div>
+
+              <button className="submit-btn" type="submit">
+                Randevu Oluştur
+              </button>
+
+              {message && (
+                <div
+                  className={success ? "message-box success" : "message-box error"}
+                >
+                  {message}
                 </div>
               )}
+            </form>
+          </div>
+
+          <div className="summary-card">
+            <h3>Randevu Özeti</h3>
+
+            <ul>
+              <li>
+                <strong>Ad Soyad:</strong> {name || "-"}
+              </li>
+
+              <li>
+                <strong>Telefon:</strong> {phone || "-"}
+              </li>
+
+              <li>
+                <strong>Çalışan:</strong> {employee || "-"}
+              </li>
+
+              <li>
+                <strong>İşlem:</strong>{" "}
+                {service.length > 0 ? service.join(", ") : "-"}
+              </li>
+
+              <li>
+                <strong>Toplam Süre:</strong>{" "}
+                {totalDuration > 0 ? `${totalDuration} dk` : "-"}
+              </li>
+
+              <li>
+  <strong>Toplam Ücret:</strong>{" "}
+  {totalPrice > 0 ? `${totalPrice} TL` : "-"}
+</li>
+
+              <li>
+                <strong>Tarih:</strong> {date || "-"}
+              </li>
+
+              <li>
+                <strong>Başlangıç:</strong> {time || "-"}
+              </li>
+
+              <li>
+                <strong>Bitiş:</strong> {endTime}
+              </li>
+            </ul>
+
+            <div className="summary-info">
+              <div className="info-card">🕒 08:00 - 22:00</div>
+              <div className="info-card">📅 Pazar Günleri Kapalı</div>
             </div>
-
-            <div className="secure-box">
-              Bilgileriniz üçüncü kişilerle paylaşılmaz.
-            </div>
-
-            <button className="submit-btn" type="submit">
-              Randevu Oluştur
-            </button>
-
-            {message && (
-              <div
-                className={success ? "message-box success" : "message-box error"}
-              >
-                {message}
-              </div>
-            )}
-          </form>
-        </div>
-
-        <div className="summary-card">
-          <h3>Randevu Özeti</h3>
-
-          <ul>
-            <li>
-              <strong>Ad Soyad:</strong> {name || "-"}
-            </li>
-
-            <li>
-              <strong>Telefon:</strong> {phone || "-"}
-            </li>
-
-            <li>
-              <strong>Çalışan:</strong> {employee || "-"}
-            </li>
-
-            <li>
-              <strong>İşlem:</strong>{" "}
-              {service.length > 0 ? service.join(", ") : "-"}
-            </li>
-
-            <li>
-              <strong>Toplam Süre:</strong>{" "}
-              {totalDuration > 0 ? `${totalDuration} dk` : "-"}
-            </li>
-
-            <li>
-              <strong>Tarih:</strong> {date || "-"}
-            </li>
-
-            <li>
-              <strong>Başlangıç:</strong> {time || "-"}
-            </li>
-
-            <li>
-              <strong>Bitiş:</strong> {endTime}
-            </li>
-          </ul>
-
-          <div className="summary-info">
-            <div className="info-card">🕒 08:00 - 22:00</div>
-            <div className="info-card">📅 Pazar Günleri Kapalı</div>
           </div>
         </div>
       </div>
-    </div>
+    );
+  };
+
+  return (
+    <BrowserRouter>
+      <Routes>
+        <Route path="/" element={<AppointmentPage />} />
+        <Route
+          path="/admin"
+          element={<Admin onBack={() => (window.location.href = "/")} />}
+        />
+      </Routes>
+    </BrowserRouter>
   );
 }
 

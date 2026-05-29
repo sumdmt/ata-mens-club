@@ -27,6 +27,12 @@ const appointmentSchema = new mongoose.Schema(
       required: true,
     },
 
+    totalPrice: {
+      type: Number,
+      required: true,
+      default: 0,
+    },
+
     date: {
       type: String,
       required: true,
@@ -47,7 +53,4 @@ const appointmentSchema = new mongoose.Schema(
   }
 );
 
-module.exports = mongoose.model(
-  "Appointment",
-  appointmentSchema
-);
+module.exports = mongoose.model("Appointment", appointmentSchema);
