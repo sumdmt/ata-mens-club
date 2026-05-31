@@ -125,35 +125,6 @@ Müşteriler çalışan seçerek randevu oluşturabilir, uygun saatleri görünt
 
 ---
 
-## Kurulum
-
-### Backend
-
-```bash
-cd backend
-npm install
-node server.js
-```
-
-### Frontend
-
-```bash
-npm install
-npm start
-```
-
----
-
-## Ortam Değişkenleri
-
-```env
-MONGO_URI=
-JWT_SECRET=
-ADMIN_PASSWORD=
-FRONTEND_URL=
-```
-
----
 
 ## Geliştirici
 
