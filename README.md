@@ -1,70 +1,163 @@
-# Getting Started with Create React App
+# ATA MEN'S CLUB Randevu Sistemi
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+## Proje Hakkında
 
-## Available Scripts
+ATA MEN'S CLUB için geliştirilmiş web tabanlı randevu yönetim sistemidir.
 
-In the project directory, you can run:
+Müşteriler çalışan seçerek randevu oluşturabilir, uygun saatleri görüntüleyebilir ve randevu talebi oluşturabilir. Admin paneli üzerinden randevular yönetilebilir, çalışanların kapalı saatleri tanımlanabilir ve işletme raporları görüntülenebilir.
 
-### `npm start`
+---
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+## Kullanılan Teknolojiler
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+### Frontend
 
-### `npm test`
+* React.js
+* CSS
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+### Backend
 
-### `npm run build`
+* Node.js
+* Express.js
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+### Veritabanı
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+* MongoDB Atlas
+* Mongoose
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+### Güvenlik
 
-### `npm run eject`
+* JWT Authentication
+* Helmet
+* CORS
+* Express Rate Limit
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
+---
 
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+## Çalışanlar
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
+### Erkek Kuaförleri
 
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
+* Bilal Ata
+* Yaşar Luş
+* Adil Özel
+* Mustafa Sünnü
+* Murat Hakikat
 
-## Learn More
+### Kadın Bakım Uzmanı
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+* Duygu Sert
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+---
 
-### Code Splitting
+## Hizmetler
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
+### Erkek Kuaförleri
 
-### Analyzing the Bundle Size
+* Saç + Sakal
+* Sadece Saç
+* Sadece Sakal
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
+### Kadın Bakım Uzmanı
 
-### Making a Progressive Web App
+* Manikür
+* Pedikür
+* Kaş Alımı
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
+---
 
-### Advanced Configuration
+## Müşteri Özellikleri
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
+* Randevu oluşturma
+* Çalışan seçimi
+* Çoklu işlem seçimi
+* Toplam süre hesaplama
+* Toplam ücret hesaplama
+* Dolu saat kontrolü
+* Kapalı saat kontrolü
+* Çakışan randevu kontrolü
+* Pazar günü kapalı kontrolü
+* Telefon numarası format kontrolü
+* Randevu özeti görüntüleme
 
-### Deployment
+---
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
+## Admin Paneli Özellikleri
 
-### `npm run build` fails to minify
+* JWT tabanlı admin giriş sistemi
+* Admin çıkış sistemi
+* Randevu listeleme
+* Randevu onaylama
+* Randevu reddetme
+* Randevu düzenleme
+* Randevu silme
+* Kapalı saat ekleme
+* Kapalı saat silme
+* Tarihe göre filtreleme
+* Çalışana göre filtreleme
+* Toplam randevu raporu
+* Bekleyen randevu raporu
+* Onaylanan randevu raporu
+* Reddedilen randevu raporu
+* Günlük gelir raporu
+* Aylık gelir raporu
+* Yıllık gelir raporu
+* Çalışan bazlı performans raporu
+* En çok yapılan işlemler raporu
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+---
+
+## Güvenlik Özellikleri
+
+* JWT token doğrulama
+* Admin endpoint koruması
+* Rate Limit koruması
+* Helmet güvenlik başlıkları
+* CORS yapılandırması
+* Environment Variables (.env)
+
+---
+
+## Çalışma Saatleri
+
+* Pazartesi - Cumartesi: 08:00 - 22:00
+* Pazar: Kapalı
+
+---
+
+## Kurulum
+
+### Backend
+
+```bash
+cd backend
+npm install
+node server.js
+```
+
+### Frontend
+
+```bash
+npm install
+npm start
+```
+
+---
+
+## Ortam Değişkenleri
+
+```env
+MONGO_URI=
+JWT_SECRET=
+ADMIN_PASSWORD=
+FRONTEND_URL=
+```
+
+---
+
+## Geliştirici
+
+Sümeyye Demet
+
+Kafkas Üniversitesi
+Yönetim Bilişim Sistemleri
