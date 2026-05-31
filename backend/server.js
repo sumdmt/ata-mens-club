@@ -2,14 +2,76 @@ require("dotenv").config();
 
 const express = require("express");
 const cors = require("cors");
+const helmet = require("helmet");
+const rateLimit = require("express-rate-limit");
+const jwt = require("jsonwebtoken");
 const mongoose = require("mongoose");
 const Appointment = require("./Appointment");
 const BlockedSlot = require("./BlockedSlot");
 
 const app = express();
 
-app.use(cors());
-app.use(express.json());
+app.set("trust proxy", 1);
+
+app.use(helmet());
+
+const allowedOrigins = [
+  "http://localhost:3000",
+  "http://localhost:3001",
+  process.env.FRONTEND_URL,
+];
+
+app.use(
+  cors({
+    origin: function (origin, callback) {
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error("CORS izni yok."));
+      }
+    },
+  })
+);
+
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 100,
+  message: {
+    message: "Çok fazla istek gönderildi. Lütfen daha sonra tekrar deneyin.",
+  },
+});
+
+app.use(limiter);
+
+app.use(express.json({ limit: "10kb" }));
+
+const verifyAdminToken = (req, res, next) => {
+  const authHeader = req.headers.authorization;
+
+  if (!authHeader || !authHeader.startsWith("Bearer ")) {
+    return res.status(401).json({
+      message: "Yetkisiz erişim. Token bulunamadı.",
+    });
+  }
+
+  const token = authHeader.split(" ")[1];
+
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+
+    if (decoded.role !== "admin") {
+      return res.status(403).json({
+        message: "Bu işlem için yetkiniz yok.",
+      });
+    }
+
+    next();
+  } catch (error) {
+    return res.status(401).json({
+      message: "Geçersiz veya süresi dolmuş token.",
+    });
+  }
+};
 
 mongoose
   .connect(process.env.MONGO_URI)
@@ -137,7 +199,7 @@ app.get("/api/appointments", async (req, res) => {
   }
 });
 
-app.put("/api/appointments/:id/status", async (req, res) => {
+app.put("/api/appointments/:id/status", verifyAdminToken, async (req, res) => {
   try {
     const { status } = req.body;
 
@@ -173,7 +235,7 @@ app.put("/api/appointments/:id/status", async (req, res) => {
   }
 });
 
-app.put("/api/appointments/:id", async (req, res) => {
+app.put("/api/appointments/:id", verifyAdminToken, async (req, res) => {
   try {
     const {
       name,
@@ -187,6 +249,52 @@ app.put("/api/appointments/:id", async (req, res) => {
       endTime,
       status,
     } = req.body;
+
+    if (!employee || !date || !time || !totalDuration) {
+      return res.status(400).json({
+        message: "Eksik randevu güncelleme bilgisi gönderildi.",
+      });
+    }
+
+    const appointments = await Appointment.find({
+      employee,
+      date,
+      _id: { $ne: req.params.id },
+    });
+
+    const blockedSlots = await BlockedSlot.find({
+      employee,
+      date,
+    });
+
+    const newStart = timeToMinutes(time);
+    const newEnd = newStart + Number(totalDuration);
+
+    const appointmentConflict = appointments.find((item) => {
+      const existingStart = timeToMinutes(item.time);
+      const existingEnd = existingStart + Number(item.totalDuration || 0);
+
+      return newStart < existingEnd && newEnd > existingStart;
+    });
+
+    if (appointmentConflict) {
+      return res.status(400).json({
+        message: "Bu saat aralığında başka bir randevu var.",
+      });
+    }
+
+    const blockedConflict = blockedSlots.find((slot) => {
+      const blockedStart = timeToMinutes(slot.startTime);
+      const blockedEnd = timeToMinutes(slot.endTime);
+
+      return newStart < blockedEnd && newEnd > blockedStart;
+    });
+
+    if (blockedConflict) {
+      return res.status(400).json({
+        message: "Bu saat aralığı kapalı.",
+      });
+    }
 
     const updatedAppointment = await Appointment.findByIdAndUpdate(
       req.params.id,
@@ -225,7 +333,7 @@ app.put("/api/appointments/:id", async (req, res) => {
   }
 });
 
-app.post("/api/blocked-slots", async (req, res) => {
+app.post("/api/blocked-slots", verifyAdminToken, async (req, res) => {
   try {
     const { employee, date, startTime, endTime, reason } = req.body;
 
@@ -274,7 +382,7 @@ app.get("/api/blocked-slots", async (req, res) => {
   }
 });
 
-app.delete("/api/blocked-slots/:id", async (req, res) => {
+app.delete("/api/blocked-slots/:id", verifyAdminToken, async (req, res) => {
   try {
     const deletedBlockedSlot = await BlockedSlot.findByIdAndDelete(
       req.params.id
@@ -299,7 +407,7 @@ app.delete("/api/blocked-slots/:id", async (req, res) => {
   }
 });
 
-app.delete("/api/appointments/:id", async (req, res) => {
+app.delete("/api/appointments/:id", verifyAdminToken, async (req, res) => {
   try {
     const deletedAppointment = await Appointment.findByIdAndDelete(
       req.params.id
@@ -324,7 +432,7 @@ app.delete("/api/appointments/:id", async (req, res) => {
   }
 });
 
-app.get("/api/reports/income", async (req, res) => {
+app.get("/api/reports/income", verifyAdminToken, async (req, res) => {
   try {
     const appointments = await Appointment.find({ status: "Onaylandı" });
 
@@ -373,6 +481,40 @@ app.get("/api/reports/income", async (req, res) => {
   } catch (error) {
     res.status(500).json({
       message: "Gelir raporu alınamadı",
+      error: error.message,
+    });
+  }
+});
+
+app.post("/api/admin/login", async (req, res) => {
+  try {
+    const { password } = req.body;
+
+    if (!password) {
+      return res.status(400).json({
+        message: "Şifre zorunludur.",
+      });
+    }
+
+    if (password !== process.env.ADMIN_PASSWORD) {
+      return res.status(401).json({
+        message: "Şifre hatalı.",
+      });
+    }
+
+    const token = jwt.sign(
+      { role: "admin" },
+      process.env.JWT_SECRET,
+      { expiresIn: "2h" }
+    );
+
+    res.json({
+      message: "Giriş başarılı.",
+      token,
+    });
+  } catch (error) {
+    res.status(500).json({
+      message: "Admin girişi sırasında hata oluştu.",
       error: error.message,
     });
   }

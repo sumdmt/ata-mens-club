@@ -17,6 +17,13 @@ function Admin({ onBack }) {
 
   const [password, setPassword] = useState("");
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  useEffect(() => {
+  const token = localStorage.getItem("adminToken");
+
+  if (token) {
+    setIsLoggedIn(true);
+  }
+}, []);
   const [loginError, setLoginError] = useState("");
 
   const [filterDate, setFilterDate] = useState("");
@@ -65,24 +72,51 @@ function Admin({ onBack }) {
     }
   };
 
-  const handleLogin = (e) => {
-    e.preventDefault();
+  const handleLogout = () => {
+  localStorage.removeItem("adminToken");
+  setIsLoggedIn(false);
+};
 
-    if (password === "1234") {
+  const handleLogin = async (e) => {
+  e.preventDefault();
+
+  try {
+    const response = await fetch(
+      "http://localhost:5000/api/admin/login",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          password,
+        }),
+      }
+    );
+
+    const data = await response.json();
+
+    if (response.ok) {
+      localStorage.setItem("adminToken", data.token);
+
       setIsLoggedIn(true);
       setLoginError("");
     } else {
-      setLoginError("Şifre hatalı.");
+      setLoginError(data.message || "Şifre hatalı.");
     }
-  };
+  } catch (error) {
+    setLoginError("Sunucu bağlantı hatası.");
+  }
+};
 
   const updateAppointmentStatus = async (id, status) => {
     try {
       const response = await fetch(`${API_URL}/api/appointments/${id}/status`, {
         method: "PUT",
         headers: {
-          "Content-Type": "application/json",
-        },
+  "Content-Type": "application/json",
+  Authorization: `Bearer ${localStorage.getItem("adminToken")}`,
+},
         body: JSON.stringify({ status }),
       });
 
@@ -121,9 +155,12 @@ function Admin({ onBack }) {
     try {
       const response = await fetch(`${API_URL}/api/blocked-slots`, {
         method: "POST",
+
         headers: {
-          "Content-Type": "application/json",
-        },
+  "Content-Type": "application/json",
+  Authorization: `Bearer ${localStorage.getItem("adminToken")}`,
+},
+        
         body: JSON.stringify({
           employee: blockEmployee,
           date: blockDate,
@@ -153,24 +190,27 @@ function Admin({ onBack }) {
   };
 
   const deleteBlockedSlot = async (id) => {
-    const confirmDelete = window.confirm(
-      "Bu kapalı saati silmek istediğinize emin misiniz?"
-    );
+  const confirmDelete = window.confirm(
+    "Bu kapalı saati silmek istediğinize emin misiniz?"
+  );
 
-    if (!confirmDelete) return;
+  if (!confirmDelete) return;
 
-    try {
-      const response = await fetch(`${API_URL}/api/blocked-slots/${id}`, {
-        method: "DELETE",
-      });
+  try {
+    const response = await fetch(`${API_URL}/api/blocked-slots/${id}`, {
+      method: "DELETE",
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem("adminToken")}`,
+      },
+    });
 
-      if (response.ok) {
-        setBlockedSlots((prev) => prev.filter((item) => item._id !== id));
-      }
-    } catch (error) {
-      console.log("Kapalı saat silinemedi", error);
+    if (response.ok) {
+      setBlockedSlots((prev) => prev.filter((item) => item._id !== id));
     }
-  };
+  } catch (error) {
+    console.log("Kapalı saat silinemedi", error);
+  }
+};
 
   const deleteAppointment = async (id) => {
   const confirmDelete = window.confirm(
@@ -183,8 +223,11 @@ function Admin({ onBack }) {
     const response = await fetch(
       `${API_URL}/api/appointments/${id}`,
       {
-        method: "DELETE",
-      }
+  method: "DELETE",
+  headers: {
+    Authorization: `Bearer ${localStorage.getItem("adminToken")}`,
+  },
+}
     );
 
     if (response.ok) {
@@ -236,8 +279,9 @@ const calculatedEndTime = `${String(endHour).padStart(2, "0")}:${String(endMinut
       {
         method: "PUT",
         headers: {
-          "Content-Type": "application/json",
-        },
+  "Content-Type": "application/json",
+  Authorization: `Bearer ${localStorage.getItem("adminToken")}`,
+},
         body: JSON.stringify({
           ...editingAppointment,
           date: editDate,
@@ -250,22 +294,27 @@ const calculatedEndTime = `${String(endHour).padStart(2, "0")}:${String(endMinut
 
     const data = await response.json();
 
-    if (response.ok) {
-      setAppointments((prev) =>
-        prev.map((item) =>
-          item._id === editingAppointment._id
-            ? data.appointment
-            : item
-        )
-      );
+    
+   if (response.ok) {
+  setAppointments((prev) =>
+    prev.map((item) =>
+      item._id === editingAppointment._id
+        ? data.appointment
+        : item
+    )
+  );
 
-      cancelEditAppointment();
-      alert("Randevu güncellendi.");
-    }
+  cancelEditAppointment();
+  alert("Randevu güncellendi.");
+} else {
+  alert(data.message || "Randevu güncellenemedi.");
+}
   } catch (error) {
     console.log("Randevu güncellenemedi", error);
+    alert("Sunucu bağlantı hatası.");
   }
 };
+
 
   const filteredAppointments = appointments
   .filter((item) => {
@@ -402,6 +451,16 @@ const sortedServices = Object.entries(serviceStats).sort(
   (a, b) => b[1] - a[1]
 );
 
+const token = localStorage.getItem("adminToken");
+
+if (!token) {
+  return (
+    <div className="admin-page">
+      <h2>Yetkisiz erişim</h2>
+    </div>
+  );
+}
+
   if (!isLoggedIn) {
     return (
       <div className="admin-page">
@@ -434,12 +493,26 @@ const sortedServices = Object.entries(serviceStats).sort(
   }
 
   return (
-    <div className="admin-page">
-      <button type="button" className="back-btn" onClick={onBack}>
-        Randevu Sayfasına Dön
-      </button>
+   <div className="admin-page">
+  <div className="admin-top-buttons">
+    <button
+      type="button"
+      className="back-btn"
+      onClick={onBack}
+    >
+      Randevu Sayfasına Dön
+    </button>
 
-      <h1>Admin Paneli</h1>
+    <button
+      type="button"
+      className="logout-btn"
+      onClick={handleLogout}
+    >
+      Çıkış Yap
+    </button>
+  </div>
+
+  <h1>Admin Paneli</h1>
 
       <div className="admin-filter-box">
         <div>

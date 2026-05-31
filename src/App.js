@@ -3,7 +3,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { useEffect, useState } from "react";
 import Admin from "./pages/Admin";
 
-const API_URL = "https://ata-mens-club.onrender.com";
+const API_URL = "http://localhost:5000";
 
 function App() {
   const employees = [
@@ -541,9 +541,9 @@ function App() {
       <Routes>
         <Route path="/" element={appointmentPage} />
         <Route
-          path="/admin"
-          element={<Admin onBack={() => (window.location.href = "/")} />}
-        />
+  path="/ata-bilal-2026-panel"
+  element={<Admin onBack={() => (window.location.href = "/")} />}
+/>
       </Routes>
     </BrowserRouter>
   );
