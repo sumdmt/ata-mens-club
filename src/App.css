@@ -14,24 +14,88 @@ body,
 
 body {
   font-family: "Segoe UI", sans-serif;
-  background: #f6efe4;
-  color: #111;
+  background: #f3f4f6;
+  color: #111827;
 }
 
-.page {
+.page,
+.admin-page {
   min-height: 100vh;
   padding: 20px;
-  background: linear-gradient(180deg, #fffaf3 0%, #f3eadb 100%);
+  background: #f3f4f6;
 }
+
+/* GENEL */
+
+button {
+  padding: 14px 18px;
+  border-radius: 14px;
+  border: 1px solid #d1d5db;
+  background: #ffffff;
+  color: #111827;
+  font-weight: 700;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+button:hover {
+  background: #1f2937;
+  color: #ffffff;
+  transform: translateY(-1px);
+}
+
+label {
+  display: block;
+  margin-top: 18px;
+  margin-bottom: 8px;
+  font-size: 14px;
+  font-weight: 700;
+  color: #374151;
+}
+
+input,
+select,
+.multi-select-header,
+.time-select-header {
+  width: 100%;
+  height: 54px;
+  min-height: 54px;
+  padding: 0 16px;
+  border-radius: 14px;
+  border: 1px solid #d1d5db;
+  background: #ffffff;
+  color: #111827;
+  font-size: 15px;
+  outline: none;
+  transition: 0.2s;
+  display: flex;
+  align-items: center;
+}
+
+input:focus,
+select:focus,
+.multi-select-header:hover,
+.time-select-header:hover {
+  border-color: #6b7280;
+  box-shadow: 0 0 0 4px rgba(107, 114, 128, 0.12);
+}
+
+select {
+  appearance: none;
+  -webkit-appearance: none;
+  background-image: none;
+}
+
+/* MARKA ALANI */
 
 .hero {
   max-width: 1180px;
   margin: 0 auto 18px;
-  padding: 50px;
-  border-radius: 30px;
-  background: #fffdf9;
-  border: 1px solid #e0c36e;
-  box-shadow: 0 12px 35px rgba(0, 0, 0, 0.06);
+  padding: 46px;
+  border-radius: 28px;
+  background: #ffffff;
+  border: 1px solid #d1d5db;
+  box-shadow: 0 12px 30px rgba(17, 24, 39, 0.06);
 }
 
 .hero-overlay,
@@ -50,13 +114,14 @@ body {
   font-weight: 900;
   letter-spacing: 12px;
   line-height: 1;
+  color: #111827;
 }
 
 .brand-text p {
   margin-top: 20px;
   font-size: 17px;
   letter-spacing: 9px;
-  color: #222;
+  color: #4b5563;
   font-weight: 500;
 }
 
@@ -65,8 +130,10 @@ body {
   display: block;
   margin-top: 18px;
   font-size: 30px;
-  color: #d6a72f;
+  color: #1f2937;
 }
+
+/* RANDEVU SAYFASI */
 
 .layout {
   max-width: 1180px;
@@ -79,63 +146,24 @@ body {
 
 .form-card,
 .summary-card {
-  background: #fffdf9;
-  border-radius: 30px;
+  background: #ffffff;
+  border-radius: 28px;
   padding: 28px;
-  border: 1px solid #e2c778;
-  box-shadow: 0 12px 35px rgba(0, 0, 0, 0.05);
+  border: 1px solid #d1d5db;
+  box-shadow: 0 12px 30px rgba(17, 24, 39, 0.05);
 }
 
 .form-card h2,
 .summary-card h3 {
-  font-size: 36px;
+  font-size: 34px;
   margin-bottom: 8px;
+  color: #111827;
 }
 
 .subtitle {
   margin-bottom: 20px;
-  color: #666;
+  color: #6b7280;
   font-size: 16px;
-}
-
-label {
-  display: block;
-  margin-top: 18px;
-  margin-bottom: 8px;
-  font-size: 14px;
-  font-weight: 700;
-}
-
-input,
-select,
-.multi-select-header,
-.time-select-header {
-  width: 100%;
-  height: 58px;
-  min-height: 58px;
-  padding: 0 18px;
-  border-radius: 18px;
-  border: 1px solid #e0c36e;
-  background: #fff;
-  font-size: 15px;
-  outline: none;
-  transition: 0.2s;
-  display: flex;
-  align-items: center;
-}
-
-input:focus,
-select:focus,
-.multi-select-header:hover,
-.time-select-header:hover {
-  border-color: #b89132;
-  box-shadow: 0 0 0 4px rgba(184, 145, 50, 0.12);
-}
-
-select {
-  appearance: none;
-  -webkit-appearance: none;
-  background-image: none;
 }
 
 .multi-select,
@@ -153,10 +181,10 @@ select {
 .multi-select-options,
 .time-select-options {
   margin-top: 8px;
-  border: 1px solid #e0c36e;
-  border-radius: 18px;
-  background: white;
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
+  border: 1px solid #d1d5db;
+  border-radius: 16px;
+  background: #ffffff;
+  box-shadow: 0 10px 25px rgba(17, 24, 39, 0.08);
   overflow: hidden;
 }
 
@@ -166,16 +194,16 @@ select {
   justify-content: space-between;
   align-items: center;
   cursor: pointer;
-  border-bottom: 1px solid #f0e2bd;
+  border-bottom: 1px solid #e5e7eb;
 }
 
 .multi-option:hover {
-  background: #fff2cb;
+  background: #f3f4f6;
 }
 
 .selected-option {
-  background: #111;
-  color: #d6b75a;
+  background: #1f2937;
+  color: #ffffff;
 }
 
 .time-select-options {
@@ -187,22 +215,6 @@ select {
   overflow-y: auto;
 }
 
-button {
-  padding: 15px;
-  border-radius: 18px;
-  border: 1px solid #e0c36e;
-  background: white;
-  font-weight: 700;
-  cursor: pointer;
-  transition: 0.2s;
-}
-
-button:hover {
-  background: #d6b75a;
-  color: #111;
-  transform: translateY(-2px);
-}
-
 .time-select-options button {
   height: 40px;
   border-radius: 999px;
@@ -211,17 +223,17 @@ button:hover {
 }
 
 .selected {
-  background: #111 !important;
-  color: #d6b75a !important;
-  border-color: #111 !important;
+  background: #1f2937 !important;
+  color: #ffffff !important;
+  border-color: #1f2937 !important;
 }
 
 .booked-time {
-  background: #e5e5e5 !important;
-  color: #999 !important;
-  border-color: #ddd !important;
+  background: #e5e7eb !important;
+  color: #9ca3af !important;
+  border-color: #d1d5db !important;
   cursor: not-allowed !important;
-  opacity: 0.7;
+  opacity: 0.75;
 }
 
 .booked-time:hover {
@@ -233,8 +245,9 @@ button:hover {
   margin-bottom: 24px;
   padding: 18px;
   border-radius: 16px;
-  background: #fff8e4;
-  border: 1px solid #d6b75a;
+  background: #f8fafc;
+  border: 1px solid #d1d5db;
+  color: #374151;
   font-size: 14px;
   font-weight: 600;
 }
@@ -244,11 +257,15 @@ button:hover {
   margin-top: 20px;
   padding: 16px;
   border: none;
-  border-radius: 18px;
-  background: linear-gradient(135deg, #111 0%, #2b2b2b 100%);
-  color: #d6b75a;
+  border-radius: 16px;
+  background: #1f2937;
+  color: #ffffff;
   font-size: 17px;
   font-weight: 800;
+}
+
+.submit-btn:hover {
+  background: #111827;
 }
 
 .summary-card ul {
@@ -258,25 +275,27 @@ button:hover {
 
 .summary-card li {
   padding: 14px 0;
-  border-bottom: 1px solid #ecd7a3;
+  border-bottom: 1px solid #e5e7eb;
   font-size: 16px;
+  color: #374151;
 }
 
 .summary-info {
   margin-top: 28px;
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 18px;
 }
 
 .info-card {
   width: 100%;
-  padding: 20px;
-  border-radius: 20px;
-  border: 1px solid #e0c36e;
-  background: white;
+  padding: 18px;
+  border-radius: 18px;
+  border: 1px solid #d1d5db;
+  background: #f8fafc;
+  color: #111827;
   font-weight: 700;
-  font-size: 17px;
+  font-size: 16px;
 }
 
 .message-box {
@@ -301,28 +320,21 @@ button:hover {
 
 /* ADMIN PANEL */
 
-.admin-page {
-  min-height: 100vh;
-  background: #f6f1e7;
-  padding: 24px;
-}
-
 .admin-page h1 {
   font-size: 36px;
   margin-bottom: 24px;
-  color: #111;
+  color: #111827;
 }
 
 .back-btn,
 .admin-open-btn,
 .filter-clear-btn {
-  border: 1px solid #d4af37;
-  background: white;
-  color: #111;
+  border: 1px solid #d1d5db;
+  background: #ffffff;
+  color: #111827;
   padding: 12px 18px;
   border-radius: 14px;
   font-weight: 700;
-  cursor: pointer;
 }
 
 .back-btn {
@@ -336,16 +348,17 @@ button:hover {
 .back-btn:hover,
 .admin-open-btn:hover,
 .filter-clear-btn:hover {
-  background: #111;
-  color: #d4af37;
+  background: #1f2937;
+  color: #ffffff;
 }
 
 .admin-login-card {
   max-width: 420px;
-  background: white;
-  border: 1px solid #d4af37;
+  background: #ffffff;
+  border: 1px solid #d1d5db;
   border-radius: 24px;
   padding: 32px;
+  box-shadow: 0 12px 30px rgba(17, 24, 39, 0.06);
 }
 
 .admin-login-card h1 {
@@ -362,8 +375,8 @@ button:hover {
   display: flex;
   align-items: end;
   gap: 16px;
-  background: white;
-  border: 1px solid #d4af37;
+  background: #ffffff;
+  border: 1px solid #d1d5db;
   border-radius: 22px;
   padding: 18px;
   margin-bottom: 18px;
@@ -385,18 +398,99 @@ button:hover {
 .admin-count {
   margin-bottom: 18px;
   font-weight: 700;
+  color: #111827;
 }
 
+/* ADMIN ÖZET KARTLARI */
+
+.admin-summary {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: 14px;
+  margin: 22px 0;
+}
+
+.admin-summary .summary-card {
+  background: #ffffff;
+  border: 1px solid #d1d5db;
+  border-radius: 18px;
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  box-shadow: 0 8px 22px rgba(17, 24, 39, 0.04);
+}
+
+.admin-summary .summary-card span {
+  font-size: 14px;
+  font-weight: 600;
+  color: #4b5563;
+}
+
+.admin-summary .summary-card strong {
+  font-size: 24px;
+  color: #111827;
+}
+
+.income-card strong {
+  color: #18753d !important;
+}
+
+/* RAPOR ALANLARI */
+
+.employee-report-box {
+  background: #ffffff;
+  border: 1px solid #d1d5db;
+  border-radius: 20px;
+  padding: 20px;
+  margin: 20px 0;
+  box-shadow: 0 8px 22px rgba(17, 24, 39, 0.04);
+}
+
+.employee-report-box h2 {
+  margin-bottom: 16px;
+  color: #111827;
+}
+
+.employee-report-grid,
+.service-report-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 14px;
+}
+
+.employee-report-card {
+  border: 1px solid #d1d5db;
+  border-radius: 16px;
+  padding: 16px;
+  background: #f8fafc;
+}
+
+.employee-report-card h3 {
+  margin-bottom: 10px;
+  color: #111827;
+}
+
+.employee-report-card p {
+  color: #374151;
+  font-size: 14px;
+  margin-bottom: 6px;
+}
+
+/* KAPALI SAAT */
+
 .blocked-slot-box {
-  background: white;
-  border: 1px solid #d4af37;
+  background: #ffffff;
+  border: 1px solid #d1d5db;
   border-radius: 22px;
   padding: 20px;
   margin: 20px 0;
+  box-shadow: 0 8px 22px rgba(17, 24, 39, 0.04);
 }
 
 .blocked-slot-box h2 {
   margin-bottom: 16px;
+  color: #111827;
 }
 
 .blocked-slot-form {
@@ -415,9 +509,13 @@ button:hover {
 }
 
 .blocked-slot-form button {
-  background: #111;
-  color: #d4af37;
+  background: #1f2937;
+  color: #ffffff;
   border: none;
+}
+
+.blocked-slot-form button:hover {
+  background: #111827;
 }
 
 .blocked-slot-list {
@@ -431,20 +529,23 @@ button:hover {
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  background: #f6f1e7;
-  border: 1px solid #d4af37;
+  background: #f8fafc;
+  border: 1px solid #d1d5db;
   border-radius: 14px;
   padding: 12px;
   font-size: 14px;
+  color: #374151;
 }
 
 .blocked-slot-card button {
-  background: #111;
-  color: #d4af37;
+  background: #1f2937;
+  color: #ffffff;
   padding: 8px 14px;
   border-radius: 10px;
   border: none;
 }
+
+/* RANDEVU LİSTESİ */
 
 .admin-list {
   display: grid;
@@ -453,35 +554,168 @@ button:hover {
 }
 
 .admin-card {
-  background: white;
-  border: 1px solid #d4af37;
+  background: #ffffff;
+  border: 1px solid #d1d5db;
   border-radius: 22px;
   padding: 20px;
   max-width: 300px;
+  box-shadow: 0 8px 22px rgba(17, 24, 39, 0.04);
 }
 
 .admin-card h3 {
   font-size: 24px;
   margin-bottom: 12px;
+  color: #111827;
 }
 
 .admin-card p {
   margin-bottom: 8px;
-  color: #333;
+  color: #374151;
   font-size: 14px;
 }
 
+.appointment-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 12px;
+}
+
+.approve-btn,
+.reject-btn,
+.edit-btn,
 .delete-btn {
-  margin-top: 16px;
   width: 100%;
-  height: 44px;
-  border: none;
-  background: #111;
-  color: #d4af37;
+  min-height: 44px;
   border-radius: 14px;
   font-size: 14px;
   font-weight: 700;
 }
+
+.approve-btn {
+  background: #18753d;
+  color: #ffffff;
+  border: none;
+}
+
+.reject-btn {
+  background: #9b1c1c;
+  color: #ffffff;
+  border: none;
+}
+
+.edit-btn {
+  background: #ffffff;
+  color: #111827;
+  border: 1px solid #d1d5db;
+  margin-top: 12px;
+}
+
+.delete-btn {
+  margin-top: 12px;
+  border: none;
+  background: #1f2937;
+  color: #ffffff;
+}
+
+.edit-btn:hover,
+.delete-btn:hover {
+  background: #111827;
+  color: #ffffff;
+}
+
+.approve-btn:disabled,
+.reject-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* SEKME BUTONLARI */
+
+.appointment-tabs {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin: 24px 0 16px;
+}
+
+.appointment-tabs button {
+  border: 1px solid #d1d5db;
+  background: #ffffff;
+  color: #111827;
+  padding: 12px 18px;
+  border-radius: 14px;
+  font-weight: 700;
+}
+
+.appointment-tabs .active-tab {
+  background: #1f2937;
+  color: #ffffff;
+  border-color: #1f2937;
+}
+
+/* DURUM ROZETLERİ */
+
+.status-badge {
+  display: inline-block;
+  padding: 8px 14px;
+  border-radius: 999px;
+  font-size: 14px;
+  font-weight: 700;
+  margin-top: 10px;
+  margin-bottom: 12px;
+}
+
+.status-approved {
+  background: #dff5e7;
+  color: #18753d;
+}
+
+.status-rejected {
+  background: #fde2e2;
+  color: #b42318;
+}
+
+.status-pending {
+  background: #fff3d6;
+  color: #9a6700;
+}
+
+/* DÜZENLEME KUTUSU */
+
+.edit-box {
+  background: #ffffff;
+  border: 1px solid #d1d5db;
+  border-radius: 20px;
+  padding: 20px;
+  margin: 20px 0;
+  box-shadow: 0 8px 22px rgba(17, 24, 39, 0.04);
+}
+
+.edit-box h3 {
+  margin-bottom: 14px;
+  color: #111827;
+}
+
+.edit-box input,
+.edit-box select {
+  margin-bottom: 12px;
+}
+
+.edit-buttons {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.edit-buttons button {
+  flex: 1;
+  background: #1f2937;
+  color: #ffffff;
+  border: none;
+}
+
+/* RESPONSIVE */
 
 @media (max-width: 1000px) {
   .layout {

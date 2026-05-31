@@ -30,16 +30,16 @@ app.get("/", (req, res) => {
 app.post("/api/appointments", async (req, res) => {
   try {
     const {
-  name,
-  phone,
-  employee,
-  service,
-  totalDuration,
-  totalPrice,
-  date,
-  time,
-  endTime,
-} = req.body;
+      name,
+      phone,
+      employee,
+      service,
+      totalDuration,
+      totalPrice,
+      date,
+      time,
+      endTime,
+    } = req.body;
 
     if (
       !name ||
@@ -95,16 +95,16 @@ app.post("/api/appointments", async (req, res) => {
     }
 
     const appointment = await Appointment.create({
-  name,
-  phone,
-  employee,
-  service,
-  totalDuration,
-  totalPrice,
-  date,
-  time,
-  endTime,
-});
+      name,
+      phone,
+      employee,
+      service,
+      totalDuration,
+      totalPrice,
+      date,
+      time,
+      endTime,
+    });
 
     res.status(201).json({
       message: "Randevu başarıyla kaydedildi.",
@@ -132,6 +132,94 @@ app.get("/api/appointments", async (req, res) => {
 
     res.status(500).json({
       message: "Randevular alınamadı.",
+      error: error.message,
+    });
+  }
+});
+
+app.put("/api/appointments/:id/status", async (req, res) => {
+  try {
+    const { status } = req.body;
+
+    if (!["pending", "approved", "rejected"].includes(status)) {
+      return res.status(400).json({
+        message: "Geçersiz durum.",
+      });
+    }
+
+    const appointment = await Appointment.findByIdAndUpdate(
+      req.params.id,
+      { status },
+      { new: true }
+    );
+
+    if (!appointment) {
+      return res.status(404).json({
+        message: "Randevu bulunamadı.",
+      });
+    }
+
+    res.json({
+      message: "Durum güncellendi.",
+      appointment,
+    });
+  } catch (error) {
+    console.log("Durum güncelleme hatası:", error.message);
+
+    res.status(500).json({
+      message: "Durum güncellenemedi.",
+      error: error.message,
+    });
+  }
+});
+
+app.put("/api/appointments/:id", async (req, res) => {
+  try {
+    const {
+      name,
+      phone,
+      employee,
+      service,
+      totalDuration,
+      totalPrice,
+      date,
+      time,
+      endTime,
+      status,
+    } = req.body;
+
+    const updatedAppointment = await Appointment.findByIdAndUpdate(
+      req.params.id,
+      {
+        name,
+        phone,
+        employee,
+        service,
+        totalDuration,
+        totalPrice,
+        date,
+        time,
+        endTime,
+        status,
+      },
+      { new: true }
+    );
+
+    if (!updatedAppointment) {
+      return res.status(404).json({
+        message: "Randevu bulunamadı.",
+      });
+    }
+
+    res.json({
+      message: "Randevu başarıyla güncellendi.",
+      appointment: updatedAppointment,
+    });
+  } catch (error) {
+    console.log("Randevu güncelleme hatası:", error.message);
+
+    res.status(500).json({
+      message: "Randevu güncellenirken hata oluştu.",
       error: error.message,
     });
   }
@@ -231,6 +319,60 @@ app.delete("/api/appointments/:id", async (req, res) => {
 
     res.status(500).json({
       message: "Randevu silinirken hata oluştu.",
+      error: error.message,
+    });
+  }
+});
+
+app.get("/api/reports/income", async (req, res) => {
+  try {
+    const appointments = await Appointment.find({ status: "Onaylandı" });
+
+    const today = new Date();
+    const todayString = today.toISOString().split("T")[0];
+    const currentMonth = todayString.slice(0, 7);
+    const currentYear = todayString.slice(0, 4);
+
+    let dailyIncome = 0;
+    let monthlyIncome = 0;
+    let yearlyIncome = 0;
+    let totalAppointments = appointments.length;
+
+    const employeeIncome = {};
+
+    appointments.forEach((appointment) => {
+      const price = appointment.totalPrice || 0;
+      const appointmentDate = appointment.date;
+
+      if (appointmentDate === todayString) {
+        dailyIncome += price;
+      }
+
+      if (appointmentDate.startsWith(currentMonth)) {
+        monthlyIncome += price;
+      }
+
+      if (appointmentDate.startsWith(currentYear)) {
+        yearlyIncome += price;
+      }
+
+      if (!employeeIncome[appointment.employee]) {
+        employeeIncome[appointment.employee] = 0;
+      }
+
+      employeeIncome[appointment.employee] += price;
+    });
+
+    res.json({
+      dailyIncome,
+      monthlyIncome,
+      yearlyIncome,
+      totalAppointments,
+      employeeIncome,
+    });
+  } catch (error) {
+    res.status(500).json({
+      message: "Gelir raporu alınamadı",
       error: error.message,
     });
   }

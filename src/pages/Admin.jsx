@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
-const API_URL = "https://ata-mens-club.onrender.com";
+
+const API_URL = "http://localhost:5000";
 
 function Admin({ onBack }) {
   const employees = [
@@ -20,6 +21,12 @@ function Admin({ onBack }) {
 
   const [filterDate, setFilterDate] = useState("");
   const [filterEmployee, setFilterEmployee] = useState("");
+  const [appointmentView, setAppointmentView] = useState("today");
+
+  const [editingAppointment, setEditingAppointment] = useState(null);
+  const [editDate, setEditDate] = useState("");
+  const [editTime, setEditTime] = useState("");
+  const [editEmployee, setEditEmployee] = useState("");
 
   const [blockEmployee, setBlockEmployee] = useState("");
   const [blockDate, setBlockDate] = useState("");
@@ -67,6 +74,42 @@ function Admin({ onBack }) {
     } else {
       setLoginError("Şifre hatalı.");
     }
+  };
+
+  const updateAppointmentStatus = async (id, status) => {
+    try {
+      const response = await fetch(`${API_URL}/api/appointments/${id}/status`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ status }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+  alert("Randevu durumu güncellendi.");
+
+  setAppointments((prev) =>
+    prev.map((item) =>
+      item._id === id ? { ...item, status: data.appointment.status } : item
+    )
+  );
+}
+       else {
+        alert(data.message || "Randevu durumu güncellenemedi.");
+      }
+    } catch (error) {
+      console.log("Durum güncellenemedi", error);
+      alert("Sunucu bağlantı hatası.");
+    }
+  };
+
+  const getStatusText = (status) => {
+    if (status === "approved") return "Onaylandı";
+    if (status === "rejected") return "Reddedildi";
+    return "Beklemede";
   };
 
   const addBlockedSlot = async () => {
@@ -117,12 +160,9 @@ function Admin({ onBack }) {
     if (!confirmDelete) return;
 
     try {
-      const response = await fetch(
-       `${API_URL}/api/blocked-slots/${id}`,
-        {
-          method: "DELETE",
-        }
-      );
+      const response = await fetch(`${API_URL}/api/blocked-slots/${id}`, {
+        method: "DELETE",
+      });
 
       if (response.ok) {
         setBlockedSlots((prev) => prev.filter((item) => item._id !== id));
@@ -133,29 +173,102 @@ function Admin({ onBack }) {
   };
 
   const deleteAppointment = async (id) => {
-    const confirmDelete = window.confirm(
-      "Bu randevuyu silmek istediğinize emin misiniz?"
+  const confirmDelete = window.confirm(
+    "Bu randevuyu silmek istediğinize emin misiniz?"
+  );
+
+  if (!confirmDelete) return;
+
+  try {
+    const response = await fetch(
+      `${API_URL}/api/appointments/${id}`,
+      {
+        method: "DELETE",
+      }
     );
 
-    if (!confirmDelete) return;
+    if (response.ok) {
+      setAppointments((prev) =>
+        prev.filter((item) => item._id !== id)
+      );
+    }
+  } catch (error) {
+    console.log("Randevu silinemedi", error);
+  }
+};
 
-    try {
-      const response = await fetch(
-        `${API_URL}/api/appointments/${id}`,
-        {
-          method: "DELETE",
-        }
+const startEditAppointment = (appointment) => {
+  setEditingAppointment(appointment);
+  setEditDate(appointment.date || "");
+  setEditTime(appointment.time || "");
+  setEditEmployee(appointment.employee || "");
+};
+
+const cancelEditAppointment = () => {
+  setEditingAppointment(null);
+  setEditDate("");
+  setEditTime("");
+  setEditEmployee("");
+};
+
+const updateAppointment = async () => {
+  if (!editingAppointment || !editDate || !editTime || !editEmployee) {
+    alert("Lütfen tarih, saat ve çalışan bilgilerini doldurun.");
+    return;
+  }
+
+  try {
+
+const [hour, minute] = editTime.split(":").map(Number);
+
+const totalMinutes =
+  hour * 60 +
+  minute +
+  Number(editingAppointment.totalDuration || 0);
+
+const endHour = Math.floor(totalMinutes / 60);
+const endMinute = totalMinutes % 60;
+
+const calculatedEndTime = `${String(endHour).padStart(2, "0")}:${String(endMinute).padStart(2, "0")}`;
+
+    const response = await fetch(
+      `${API_URL}/api/appointments/${editingAppointment._id}`,
+      {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          ...editingAppointment,
+          date: editDate,
+          time: editTime,
+          endTime: calculatedEndTime,
+          employee: editEmployee,
+        }),
+      }
+    );
+
+    const data = await response.json();
+
+    if (response.ok) {
+      setAppointments((prev) =>
+        prev.map((item) =>
+          item._id === editingAppointment._id
+            ? data.appointment
+            : item
+        )
       );
 
-      if (response.ok) {
-        setAppointments((prev) => prev.filter((item) => item._id !== id));
-      }
-    } catch (error) {
-      console.log("Randevu silinemedi", error);
+      cancelEditAppointment();
+      alert("Randevu güncellendi.");
     }
-  };
+  } catch (error) {
+    console.log("Randevu güncellenemedi", error);
+  }
+};
 
-  const filteredAppointments = appointments.filter((item) => {
+  const filteredAppointments = appointments
+  .filter((item) => {
     const dateMatch = filterDate ? item.date === filterDate : true;
 
     const employeeMatch = filterEmployee
@@ -163,12 +276,131 @@ function Admin({ onBack }) {
       : true;
 
     return dateMatch && employeeMatch;
+  })
+  .sort((a, b) => {
+    const dateA = new Date(`${a.date}T${a.time}`);
+    const dateB = new Date(`${b.date}T${b.time}`);
+
+    return dateA - dateB;
   });
+
+  const today = new Date().toISOString().split("T")[0];
+
+const todayAppointments = filteredAppointments.filter(
+  (item) => item.date === today
+);
+
+const pastAppointments = filteredAppointments.filter(
+  (item) => item.date < today
+);
+
+const futureAppointments = filteredAppointments.filter(
+  (item) => item.date > today
+);
+
+const displayedAppointments =
+  appointmentView === "today"
+    ? todayAppointments
+    : appointmentView === "future"
+    ? futureAppointments
+    : appointmentView === "past"
+    ? pastAppointments
+    : filteredAppointments;
 
   const clearFilters = () => {
     setFilterDate("");
     setFilterEmployee("");
   };
+
+  const totalAppointments = filteredAppointments.length;
+
+const pendingAppointments = filteredAppointments.filter(
+  (item) => !item.status || item.status === "pending"
+).length;
+
+const approvedAppointments = filteredAppointments.filter(
+  (item) => item.status === "approved"
+).length;
+
+const rejectedAppointments = filteredAppointments.filter(
+  (item) => item.status === "rejected"
+).length;
+
+const currentMonth = today.slice(0, 7);
+const currentYear = today.slice(0, 4);
+const totalIncome = appointments
+  .filter((item) => item.status === "approved")
+  .reduce((total, item) => total + Number(item.totalPrice || 0), 0);
+
+const todayIncome = appointments
+  .filter((item) => item.status === "approved" && item.date === today)
+  .reduce((total, item) => total + Number(item.totalPrice || 0), 0);
+
+const monthlyIncome = appointments
+  .filter(
+    (item) =>
+      item.status === "approved" &&
+      item.date &&
+      item.date.startsWith(currentMonth)
+  )
+  .reduce((total, item) => total + Number(item.totalPrice || 0), 0);
+
+  const yearlyIncome = appointments
+  .filter(
+    (item) =>
+      item.status === "approved" &&
+      item.date &&
+      item.date.startsWith(currentYear)
+  )
+  .reduce((total, item) => total + Number(item.totalPrice || 0), 0);
+
+const approvedCount = filteredAppointments.filter(
+  (item) => item.status === "approved"
+).length;
+
+const pendingCount = filteredAppointments.filter(
+  (item) => !item.status || item.status === "pending"
+).length;
+
+const employeeReports = employees.map((employee) => {
+  const employeeAppointments = appointments.filter(
+    (item) => item.employee === employee
+  );
+
+  const approvedEmployeeAppointments = employeeAppointments.filter(
+    (item) => item.status === "approved"
+  );
+
+  const employeeIncome = approvedEmployeeAppointments.reduce(
+    (total, item) => total + Number(item.totalPrice || 0),
+    0
+  );
+
+  return {
+    employee,
+    totalAppointments: employeeAppointments.length,
+    approvedAppointments: approvedEmployeeAppointments.length,
+    income: employeeIncome,
+  };
+});
+
+const serviceStats = {};
+
+appointments.forEach((appointment) => {
+  const services = Array.isArray(appointment.service)
+    ? appointment.service
+    : [appointment.service];
+
+  services.forEach((service) => {
+    if (!service) return;
+
+    serviceStats[service] = (serviceStats[service] || 0) + 1;
+  });
+});
+
+const sortedServices = Object.entries(serviceStats).sort(
+  (a, b) => b[1] - a[1]
+);
 
   if (!isLoggedIn) {
     return (
@@ -242,9 +474,92 @@ function Admin({ onBack }) {
         </button>
       </div>
 
+<div className="admin-summary">
+  <div className="summary-card">
+    <span>Toplam Randevu</span>
+    <strong>{totalAppointments}</strong>
+  </div>
+
+  <div className="summary-card">
+    <span>Bekleyen</span>
+    <strong>{pendingAppointments}</strong>
+  </div>
+
+  <div className="summary-card">
+    <span>Onaylanan</span>
+    <strong>{approvedAppointments}</strong>
+  </div>
+
+  <div className="summary-card">
+    <span>Reddedilen</span>
+    <strong>{rejectedAppointments}</strong>
+  </div>
+
+  <div className="summary-card income-card">
+    <span>Onaylı Gelir</span>
+    <strong>{totalIncome} TL</strong>
+  </div>
+
+<div className="summary-card income-card">
+  <span>Bugünkü Gelir</span>
+  <strong>{todayIncome} TL</strong>
+</div>
+
+<div className="summary-card income-card">
+  <span>Bu Ayki Gelir</span>
+  <strong>{monthlyIncome} TL</strong>
+</div>
+
+<div className="summary-card income-card">
+  <span>Bu Yılki Gelir</span>
+  <strong>{yearlyIncome} TL</strong>
+</div>
+
+</div>
+
       <p className="admin-count">
         Gösterilen randevu sayısı: {filteredAppointments.length}
       </p>
+
+      <div className="employee-report-box">
+        <h2>En Çok Yapılan İşlemler</h2>
+
+        <div className="service-report-grid">
+    {sortedServices.map(([service, count]) => (
+      <div className="employee-report-card" key={service}>
+        <h3>{service}</h3>
+
+        <p>
+          <strong>Toplam:</strong> {count}
+        </p>
+      </div>
+    ))}
+  </div>
+</div>
+
+<div className="employee-report-box">
+  <h2>Çalışan Bazlı Rapor</h2>
+
+  <div className="employee-report-grid">
+    {employeeReports.map((report) => (
+      <div className="employee-report-card" key={report.employee}>
+        <h3>{report.employee}</h3>
+
+        <p>
+          <strong>Toplam Randevu:</strong> {report.totalAppointments}
+        </p>
+
+        <p>
+          <strong>Onaylı Randevu:</strong> {report.approvedAppointments}
+        </p>
+
+        <p>
+          <strong>Gelir:</strong> {report.income} TL
+        </p>
+      </div>
+    ))}
+  </div>
+</div>
 
       <div className="blocked-slot-box">
         <h2>Kapalı Saat Ekle</h2>
@@ -321,11 +636,85 @@ function Admin({ onBack }) {
         </div>
       </div>
 
+{editingAppointment && (
+  <div className="edit-box">
+    <h3>Randevu Düzenle</h3>
+
+    <input
+      type="date"
+      value={editDate}
+      onChange={(e) => setEditDate(e.target.value)}
+    />
+
+    <input
+      type="time"
+      value={editTime}
+      onChange={(e) => setEditTime(e.target.value)}
+    />
+
+    <select
+      value={editEmployee}
+      onChange={(e) => setEditEmployee(e.target.value)}
+    >
+      <option value="Bilal Ata">Bilal Ata</option>
+      <option value="Yaşar Luş">Yaşar Luş</option>
+      <option value="Adil Özel">Adil Özel</option>
+      <option value="Mustafa Sünnü">Mustafa Sünnü</option>
+      <option value="Murat Hakikat">Murat Hakikat</option>
+      <option value="Duygu Sert">Duygu Sert</option>
+    </select>
+
+    <div className="edit-buttons">
+      <button onClick={updateAppointment}>
+        Kaydet
+      </button>
+
+      <button onClick={cancelEditAppointment}>
+        İptal
+      </button>
+    </div>
+  </div>
+)}
+
+      <div className="appointment-tabs">
+  <button
+    type="button"
+    className={appointmentView === "today" ? "active-tab" : ""}
+    onClick={() => setAppointmentView("today")}
+  >
+    Bugünkü Randevular ({todayAppointments.length})
+  </button>
+
+  <button
+    type="button"
+    className={appointmentView === "future" ? "active-tab" : ""}
+    onClick={() => setAppointmentView("future")}
+  >
+    Gelecek Randevular ({futureAppointments.length})
+  </button>
+
+  <button
+    type="button"
+    className={appointmentView === "past" ? "active-tab" : ""}
+    onClick={() => setAppointmentView("past")}
+  >
+    Geçmiş Randevular ({pastAppointments.length})
+  </button>
+
+  <button
+    type="button"
+    className={appointmentView === "all" ? "active-tab" : ""}
+    onClick={() => setAppointmentView("all")}
+  >
+    Tümü ({filteredAppointments.length})
+  </button>
+</div>
+
       <div className="admin-list">
-        {filteredAppointments.length === 0 ? (
+        {displayedAppointments.length === 0 ? (
           <p>Filtreye uygun randevu yok.</p>
         ) : (
-          filteredAppointments.map((item) => (
+          displayedAppointments.map((item) => (
             <div className="admin-card" key={item._id}>
               <h3>{item.name}</h3>
 
@@ -364,18 +753,61 @@ function Admin({ onBack }) {
                 </p>
               )}
 
-              {item.totalPrice && (
-  <p>
-    <strong>Ücret:</strong> {item.totalPrice} TL
-  </p>
-)}
+              <p>
+  <strong>Ücret:</strong>{" "}
+  {Number(item.totalPrice) > 0 ? `${item.totalPrice} TL` : "Ücret belirtilmedi"}
+</p>
 
-              <button
-                className="delete-btn"
-                onClick={() => deleteAppointment(item._id)}
-              >
-                Randevuyu Sil
-              </button>
+              <div
+  className={`status-badge ${
+    item.status === "approved"
+      ? "status-approved"
+      : item.status === "rejected"
+      ? "status-rejected"
+      : "status-pending"
+  }`}
+>
+  {item.status === "approved"
+    ? "✓ Onaylandı"
+    : item.status === "rejected"
+    ? "✕ Reddedildi"
+    : "⏳ Beklemede"}
+</div>
+
+              <div className="appointment-actions">
+                <button
+                  type="button"
+                  className="approve-btn"
+                  onClick={() => updateAppointmentStatus(item._id, "approved")}
+                  disabled={item.status === "approved"}
+                >
+                  Onayla
+                </button>
+
+                <button
+                  type="button"
+                  className="reject-btn"
+                  onClick={() => updateAppointmentStatus(item._id, "rejected")}
+                  disabled={item.status === "rejected"}
+                >
+                  Reddet
+                </button>
+
+<button
+  type="button"
+  className="edit-btn"
+  onClick={() => startEditAppointment(item)}
+>
+  Randevuyu Düzenle
+</button>
+
+                <button
+                  className="delete-btn"
+                  onClick={() => deleteAppointment(item._id)}
+                >
+                  Randevuyu Sil
+                </button>
+              </div>
             </div>
           ))
         )}
