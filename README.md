@@ -126,8 +126,6 @@ Müşteriler çalışan seçerek randevu oluşturabilir, uygun saatleri görünt
 ---
 
 
-## Geliştirici
-
 Sümeyye Demet
 
 Kafkas Üniversitesi
