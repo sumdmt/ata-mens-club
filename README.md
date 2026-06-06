@@ -91,8 +91,6 @@ Modern ve kullanıcı dostu web tabanlı kuaför randevu sistemi.
 * 08:00 - 22:00
 * Pazar kapalı
 
----
 
-# Geliştirici
 
 Sümeyye Demet
