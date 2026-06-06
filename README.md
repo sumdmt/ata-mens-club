@@ -90,7 +90,3 @@ Modern ve kullanıcı dostu web tabanlı kuaför randevu sistemi.
 * Pazartesi - Cumartesi
 * 08:00 - 22:00
 * Pazar kapalı
-
-
-
-Sümeyye Demet
