@@ -126,7 +126,3 @@ Müşteriler çalışan seçerek randevu oluşturabilir, uygun saatleri görünt
 ---
 
 
-Sümeyye Demet
-
-Kafkas Üniversitesi
-Yönetim Bilişim Sistemleri
