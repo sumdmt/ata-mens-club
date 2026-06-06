@@ -12,14 +12,13 @@ const BlockedSlot = require("./BlockedSlot");
 const app = express();
 
 app.set("trust proxy", 1);
-
 app.use(helmet());
 
 const allowedOrigins = [
   "http://localhost:3000",
   "http://localhost:3001",
   process.env.FRONTEND_URL,
-];
+].filter(Boolean);
 
 app.use(
   cors({
@@ -42,7 +41,6 @@ const limiter = rateLimit({
 });
 
 app.use(limiter);
-
 app.use(express.json({ limit: "10kb" }));
 
 const verifyAdminToken = (req, res, next) => {
@@ -83,6 +81,16 @@ const timeToMinutes = (time) => {
 
   const [hour, minute] = time.split(":").map(Number);
   return hour * 60 + minute;
+};
+
+const getTodayString = () => new Date().toISOString().split("T")[0];
+
+const deletePastBlockedSlots = async () => {
+  const today = getTodayString();
+
+  await BlockedSlot.deleteMany({
+    date: { $lt: today },
+  });
 };
 
 app.get("/", (req, res) => {
@@ -166,6 +174,7 @@ app.post("/api/appointments", async (req, res) => {
       date,
       time,
       endTime,
+      status: "pending",
     });
 
     res.status(201).json({
@@ -185,7 +194,8 @@ app.post("/api/appointments", async (req, res) => {
 app.get("/api/appointments", async (req, res) => {
   try {
     const appointments = await Appointment.find().sort({
-      createdAt: -1,
+      date: 1,
+      time: 1,
     });
 
     res.json(appointments);
@@ -343,6 +353,20 @@ app.post("/api/blocked-slots", verifyAdminToken, async (req, res) => {
       });
     }
 
+    if (timeToMinutes(startTime) >= timeToMinutes(endTime)) {
+      return res.status(400).json({
+        message: "Bitiş saati başlangıç saatinden sonra olmalıdır.",
+      });
+    }
+
+    const today = getTodayString();
+
+    if (date < today) {
+      return res.status(400).json({
+        message: "Geçmiş tarih için kapalı saat eklenemez.",
+      });
+    }
+
     const blockedSlot = await BlockedSlot.create({
       employee,
       date,
@@ -367,8 +391,11 @@ app.post("/api/blocked-slots", verifyAdminToken, async (req, res) => {
 
 app.get("/api/blocked-slots", async (req, res) => {
   try {
+    await deletePastBlockedSlots();
+
     const blockedSlots = await BlockedSlot.find().sort({
-      createdAt: -1,
+      date: 1,
+      startTime: 1,
     });
 
     res.json(blockedSlots);
@@ -434,33 +461,32 @@ app.delete("/api/appointments/:id", verifyAdminToken, async (req, res) => {
 
 app.get("/api/reports/income", verifyAdminToken, async (req, res) => {
   try {
-    const appointments = await Appointment.find({ status: "Onaylandı" });
+    const appointments = await Appointment.find({ status: "approved" });
 
-    const today = new Date();
-    const todayString = today.toISOString().split("T")[0];
+    const todayString = getTodayString();
     const currentMonth = todayString.slice(0, 7);
     const currentYear = todayString.slice(0, 4);
 
     let dailyIncome = 0;
     let monthlyIncome = 0;
     let yearlyIncome = 0;
-    let totalAppointments = appointments.length;
+    const totalAppointments = appointments.length;
 
     const employeeIncome = {};
 
     appointments.forEach((appointment) => {
-      const price = appointment.totalPrice || 0;
+      const price = Number(appointment.totalPrice || 0);
       const appointmentDate = appointment.date;
 
       if (appointmentDate === todayString) {
         dailyIncome += price;
       }
 
-      if (appointmentDate.startsWith(currentMonth)) {
+      if (appointmentDate && appointmentDate.startsWith(currentMonth)) {
         monthlyIncome += price;
       }
 
-      if (appointmentDate.startsWith(currentYear)) {
+      if (appointmentDate && appointmentDate.startsWith(currentYear)) {
         yearlyIncome += price;
       }
 
@@ -480,7 +506,7 @@ app.get("/api/reports/income", verifyAdminToken, async (req, res) => {
     });
   } catch (error) {
     res.status(500).json({
-      message: "Gelir raporu alınamadı",
+      message: "Gelir raporu alınamadı.",
       error: error.message,
     });
   }
@@ -502,11 +528,9 @@ app.post("/api/admin/login", async (req, res) => {
       });
     }
 
-    const token = jwt.sign(
-      { role: "admin" },
-      process.env.JWT_SECRET,
-      { expiresIn: "2h" }
-    );
+    const token = jwt.sign({ role: "admin" }, process.env.JWT_SECRET, {
+      expiresIn: "2h",
+    });
 
     res.json({
       message: "Giriş başarılı.",
@@ -520,7 +544,7 @@ app.post("/api/admin/login", async (req, res) => {
   }
 });
 
-const PORT = 5000;
+const PORT = process.env.PORT || 5000;
 
 app.listen(PORT, () => {
   console.log(`Server çalışıyor: ${PORT}`);
