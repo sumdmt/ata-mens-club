@@ -556,27 +556,25 @@ select {
 }
 
 .admin-card {
-  background: #ffffff;
-  border: 1px solid #d1d5db;
-  border-radius: 18px;
-  padding: 16px;
-  width: 100%;
-  max-width: 420px;
-  box-shadow: 0 8px 22px rgba(17, 24, 39, 0.04);
-}
-
-.admin-card h3 {
-  font-size: 20px;
-  margin-bottom: 10px;
-  color: #111827;
-  line-height: 1.2;
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 14px;
+  padding: 12px;
 }
 
 .admin-card p {
-  margin-bottom: 6px;
-  color: #374151;
   font-size: 14px;
-  line-height: 1.35;
+  margin: 4px 0;
+}
+
+.admin-card strong {
+  font-size: 14px;
+}
+
+.admin-card button {
+  padding: 8px;
+  font-size: 13px;
+  border-radius: 10px;
 }
 
 .appointment-actions {
@@ -674,11 +672,19 @@ select {
 .status-approved {
   background: #dff5e7;
   color: #18753d;
+
+  padding: 6px 10px;
+  font-size: 13px;
+  border-radius: 999px;
 }
 
 .status-rejected {
   background: #fde2e2;
   color: #b42318;
+
+  padding: 6px 10px;
+  font-size: 13px;
+  border-radius: 999px;
 }
 
 .status-pending {
@@ -795,8 +801,10 @@ select {
   }
 
   .admin-list {
-    grid-template-columns: 1fr;
-  }
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 16px;
+}
 
   .admin-card {
     max-width: 100%;
@@ -841,4 +849,43 @@ select {
   align-items: center;
   justify-content: center;
   gap: 8px;
+}
+
+.service-done-btn {
+  width: 120px;
+  padding: 10px;
+  border: none;
+  border-radius: 8px;
+  background: #0f172a;
+  color: white;
+  font-weight: 600;
+  cursor: pointer;
+  margin: 12px auto;
+  display: block;
+}
+
+.appointment-search-box {
+  margin: 18px 0;
+}
+
+.appointment-search-box input {
+  width: 100%;
+  padding: 14px;
+  border: 1px solid #d1d5db;
+  border-radius: 12px;
+  font-size: 15px;
+  outline: none;
+}
+
+.load-more-btn {
+  width: 100%;
+  padding: 14px;
+  margin-top: 18px;
+  border: none;
+  border-radius: 12px;
+  background: #111827;
+  color: white;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
 }

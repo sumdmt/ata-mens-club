@@ -254,6 +254,7 @@ app.put("/api/appointments/:id", verifyAdminToken, async (req, res) => {
       service,
       totalDuration,
       totalPrice,
+      price,
       date,
       time,
       endTime,
@@ -309,16 +310,19 @@ app.put("/api/appointments/:id", verifyAdminToken, async (req, res) => {
     const updatedAppointment = await Appointment.findByIdAndUpdate(
       req.params.id,
       {
-        name,
-        phone,
-        employee,
-        service,
-        totalDuration,
-        totalPrice,
-        date,
-        time,
-        endTime,
-        status,
+        
+  name,
+  phone,
+  employee,
+  service,
+  totalDuration,
+  price: Number(price),
+  totalPrice: Number(price),
+  date,
+  time,
+  endTime,
+  status,
+
       },
       { new: true }
     );
@@ -549,3 +553,4 @@ const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
   console.log(`Server çalışıyor: ${PORT}`);
 });
+

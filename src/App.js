@@ -378,17 +378,17 @@ function App() {
                           ? "multi-option selected-option"
                           : "multi-option"
                       }
-                      onClick={() => {
-                        if (service.includes(item.name)) {
-                          setService(service.filter((s) => s !== item.name));
-                        } else {
-                          setService([...service, item.name]);
-                        }
 
-                        setTime("");
-                        setIsTimeOpen(false);
-                        setIsServiceOpen(false);
-                      }}
+                      onClick={() => {
+  if (service.includes(item.name)) {
+    setService(service.filter((s) => s !== item.name));
+  } else {
+    setService([...service, item.name]);
+  }
+
+  setTime("");
+  setIsTimeOpen(false);
+}}
                     >
                       <div className="service-info">
                         <strong>{item.name}</strong>
@@ -397,6 +397,15 @@ function App() {
                       <span>{service.includes(item.name) ? "✓" : ""}</span>
                     </div>
                   ))}
+
+                  <button
+  type="button"
+  className="service-done-btn"
+  onClick={() => setIsServiceOpen(false)}
+>
+  Tamam
+</button>
+
                 </div>
               )}
             </div>

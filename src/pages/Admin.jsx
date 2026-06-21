@@ -40,12 +40,15 @@ function Admin({ onBack }) {
   const [editDate, setEditDate] = useState("");
   const [editTime, setEditTime] = useState("");
   const [editEmployee, setEditEmployee] = useState("");
+  const [editPrice, setEditPrice] = useState("");
 
   const [blockEmployee, setBlockEmployee] = useState("");
   const [blockDate, setBlockDate] = useState("");
   const [blockStartTime, setBlockStartTime] = useState("");
   const [blockEndTime, setBlockEndTime] = useState("");
   const [blockReason, setBlockReason] = useState("");
+  const [searchText, setSearchText] = useState("");
+  const [visibleCount, setVisibleCount] = useState(10);
 
   useEffect(() => {
     const token = localStorage.getItem("adminToken");
@@ -239,6 +242,7 @@ function Admin({ onBack }) {
     setEditDate(appointment.date || "");
     setEditTime(appointment.time || "");
     setEditEmployee(appointment.employee || "");
+    setEditPrice(appointment.price || "");
   };
 
   const cancelEditAppointment = () => {
@@ -246,6 +250,7 @@ function Admin({ onBack }) {
     setEditDate("");
     setEditTime("");
     setEditEmployee("");
+    setEditPrice("");
   };
 
   const updateAppointment = async () => {
@@ -281,6 +286,7 @@ function Admin({ onBack }) {
             time: editTime,
             endTime: calculatedEndTime,
             employee: editEmployee,
+            price: Number(editPrice),
           }),
         }
       );
@@ -318,7 +324,7 @@ function Admin({ onBack }) {
       const dateA = new Date(`${a.date}T${a.time}`);
       const dateB = new Date(`${b.date}T${b.time}`);
 
-      return dateA - dateB;
+    return dateB - dateA;
     });
 
   const today = new Date().toISOString().split("T")[0];
@@ -331,18 +337,33 @@ function Admin({ onBack }) {
     (item) => item.date < today
   );
 
+  const pendingAppointments = filteredAppointments.filter(
+  (item) => item.status === "pending"
+);
+
   const futureAppointments = filteredAppointments.filter(
     (item) => item.date > today
   );
 
-  const displayedAppointments =
-    appointmentView === "today"
-      ? todayAppointments
-      : appointmentView === "future"
-      ? futureAppointments
-      : appointmentView === "past"
-      ? pastAppointments
-      : filteredAppointments;
+ const displayedAppointments =
+  appointmentView === "today"
+    ? todayAppointments
+    : appointmentView === "future"
+    ? futureAppointments
+    : appointmentView === "past"
+    ? pastAppointments
+    : appointmentView === "pending"
+    ? pendingAppointments
+    : filteredAppointments;
+
+      const searchedAppointments = displayedAppointments.filter((item) => {
+  const search = searchText.toLowerCase();
+
+  return (
+    item.name?.toLowerCase().includes(search) ||
+    item.phone?.includes(search)
+  );
+});
 
   const clearFilters = () => {
     setFilterDate("");
@@ -350,10 +371,6 @@ function Admin({ onBack }) {
   };
 
   const totalAppointments = filteredAppointments.length;
-
-  const pendingAppointments = filteredAppointments.filter(
-    (item) => !item.status || item.status === "pending"
-  ).length;
 
   const approvedAppointments = filteredAppointments.filter(
     (item) => item.status === "approved"
@@ -530,10 +547,6 @@ function Admin({ onBack }) {
           <strong>{rejectedAppointments}</strong>
         </div>
 
-        <div className="summary-card income-card">
-          <span>Onaylı Gelir</span>
-          <strong>{totalIncome} TL</strong>
-        </div>
 
         <div className="summary-card income-card">
           <span>Bugünkü Gelir</span>
@@ -554,22 +567,6 @@ function Admin({ onBack }) {
       <p className="admin-count">
         Gösterilen randevu sayısı: {displayedAppointments.length}
       </p>
-
-      <div className="employee-report-box">
-        <h2>En Çok Yapılan İşlemler</h2>
-
-        <div className="service-report-grid">
-          {sortedServices.map(([service, count]) => (
-            <div className="employee-report-card" key={service}>
-              <h3>{service}</h3>
-
-              <p>
-                <strong>Toplam:</strong> {count}
-              </p>
-            </div>
-          ))}
-        </div>
-      </div>
 
       <div className="employee-report-box">
         <h2>Çalışan Bazlı Rapor</h2>
@@ -691,6 +688,13 @@ function Admin({ onBack }) {
             ))}
           </select>
 
+          <input
+  type="number"
+  placeholder="Ücret"
+  value={editPrice}
+  onChange={(e) => setEditPrice(e.target.value)}
+/>
+
           <div className="edit-buttons">
             <button type="button" onClick={updateAppointment}>
               Kaydet
@@ -728,25 +732,44 @@ function Admin({ onBack }) {
           Geçmiş Randevular ({pastAppointments.length})
         </button>
 
-        <button
-          type="button"
-          className={appointmentView === "all" ? "active-tab" : ""}
-          onClick={() => setAppointmentView("all")}
-        >
-          Tümü ({filteredAppointments.length})
-        </button>
+<button
+  type="button"
+  className={appointmentView === "pending" ? "active-tab" : ""}
+  onClick={() => setAppointmentView("pending")}
+>
+  Onay Bekleyenler ({pendingAppointments.length})
+</button>
+
+<button
+  type="button"
+  className={appointmentView === "all" ? "active-tab" : ""}
+  onClick={() => setAppointmentView("all")}
+>
+  Tümü ({filteredAppointments.length})
+</button>
+
       </div>
 
-      <div className="admin-list">
-        {displayedAppointments.length === 0 ? (
-          <p>Filtreye uygun randevu yok.</p>
-        ) : (
-          displayedAppointments.map((item) => (
-            <div className="admin-card" key={item._id}>
-              <h3>
-                <FiUser className="title-icon" />
-                {item.name}
-              </h3>
+<div className="appointment-search-box">
+  <input
+    type="text"
+    placeholder="İsim veya telefon numarası ara..."
+    value={searchText}
+    onChange={(e) => setSearchText(e.target.value)}
+  />
+</div>
+
+     <div className="admin-list">
+  {searchedAppointments.length === 0 ? (
+    <p>Filtreye uygun randevu yok.</p>
+  ) : (
+   searchedAppointments.slice(0, visibleCount).map((item) => (
+      <div className="admin-card" key={item._id}>
+
+        <h3>
+  <FiUser className="title-icon" />
+  {item.name}
+</h3>
 
               <p>
                 <FiPhone className="card-icon" />
@@ -853,6 +876,17 @@ function Admin({ onBack }) {
           ))
         )}
       </div>
+
+      {searchedAppointments.length > visibleCount && (
+  <button
+    type="button"
+    className="load-more-btn"
+    onClick={() => setVisibleCount((prev) => prev + 10)}
+  >
+    Daha Fazla Göster
+  </button>
+)}
+
     </div>
   );
 }
