@@ -534,7 +534,7 @@ function Admin({ onBack }) {
 
         <div className="summary-card">
           <span>Bekleyen</span>
-          <strong>{pendingAppointments}</strong>
+          <strong>{pendingAppointments.length}</strong>
         </div>
 
         <div className="summary-card">

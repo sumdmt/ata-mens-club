@@ -2,14 +2,43 @@ require("dotenv").config();
 
 const express = require("express");
 const cors = require("cors");
+const app = express();
+
+app.use(cors());
+
 const helmet = require("helmet");
 const rateLimit = require("express-rate-limit");
 const jwt = require("jsonwebtoken");
 const mongoose = require("mongoose");
 const Appointment = require("./Appointment");
 const BlockedSlot = require("./BlockedSlot");
+const { createClient } = require("redis");
+const redisClient = createClient({
+ url: process.env.REDIS_URL || "redis://redis:6379",
+});
 
-const app = express();
+redisClient.on("error", (err) => {
+  console.error("Redis bağlantı hatası:", err);
+});
+
+redisClient.connect().then(() => {
+  console.log("Redis bağlantısı başarılı");
+});
+
+const { RedisStore } = require("rate-limit-redis");
+
+const limiter = rateLimit({
+  store: new RedisStore({
+    sendCommand: (...args) => redisClient.sendCommand(args),
+  }),
+
+  windowMs: 15 * 60 * 1000,
+  max: 100,
+
+  message: "Çok fazla istek gönderildi. Lütfen daha sonra tekrar deneyin.",
+});
+
+app.use(limiter);
 
 app.set("trust proxy", 1);
 app.use(helmet());
@@ -20,25 +49,8 @@ const allowedOrigins = [
   process.env.FRONTEND_URL,
 ].filter(Boolean);
 
-app.use(
-  cors({
-    origin: function (origin, callback) {
-      if (!origin || allowedOrigins.includes(origin)) {
-        callback(null, true);
-      } else {
-        callback(new Error("CORS izni yok."));
-      }
-    },
-  })
-);
+app.use(cors());
 
-const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  max: 100,
-  message: {
-    message: "Çok fazla istek gönderildi. Lütfen daha sonra tekrar deneyin.",
-  },
-});
 
 app.use(limiter);
 app.use(express.json({ limit: "10kb" }));
