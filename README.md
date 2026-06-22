@@ -21,6 +21,13 @@ Modern ve kullanıcı dostu web tabanlı kuaför randevu sistemi.
 * MongoDB Atlas
 * Mongoose
 
+### DevOps & Altyapı
+
+* Docker
+* Docker Compose
+* Nginx Reverse Proxy
+* Redis
+
 ---
 
 # Özellikler
@@ -35,6 +42,8 @@ Modern ve kullanıcı dostu web tabanlı kuaför randevu sistemi.
 * Kapalı saat kontrolü
 * Pazar günü randevu engeli
 * 22:00 sonrası taşan randevu engeli
+* Aynı saat çakışma kontrolü
+* Telefon numarası doğrulama
 
 ---
 
@@ -49,6 +58,8 @@ Modern ve kullanıcı dostu web tabanlı kuaför randevu sistemi.
 * Tarihe göre filtreleme
 * Çalışana göre filtreleme
 * Günlük / gelecek / geçmiş randevu sekmeleri
+* Bekleyen randevular sekmesi
+* Randevu arama sistemi
 
 ---
 
@@ -57,7 +68,7 @@ Modern ve kullanıcı dostu web tabanlı kuaför randevu sistemi.
 * Çalışan bazlı izin oluşturma
 * Başlangıç ve bitiş saati belirleme
 * Açıklama ekleme
-* Geçmiş izinlerin otomatik silinmesi
+* Kapalı saat silme
 
 ---
 
