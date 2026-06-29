@@ -2,10 +2,6 @@ require("dotenv").config();
 
 const express = require("express");
 const cors = require("cors");
-const app = express();
-
-app.use(cors());
-
 const helmet = require("helmet");
 const rateLimit = require("express-rate-limit");
 const jwt = require("jsonwebtoken");
@@ -13,8 +9,13 @@ const mongoose = require("mongoose");
 const Appointment = require("./Appointment");
 const BlockedSlot = require("./BlockedSlot");
 const { createClient } = require("redis");
+const { RedisStore } = require("rate-limit-redis");
+const { sendSMS } = require("./services/smsService");
+const cron = require("node-cron");
+const app = express();
+
 const redisClient = createClient({
- url: process.env.REDIS_URL || "redis://redis:6379",
+  url: process.env.REDIS_URL || "redis://redis:6379",
 });
 
 redisClient.on("error", (err) => {
@@ -25,33 +26,18 @@ redisClient.connect().then(() => {
   console.log("Redis bağlantısı başarılı");
 });
 
-const { RedisStore } = require("rate-limit-redis");
-
 const limiter = rateLimit({
   store: new RedisStore({
     sendCommand: (...args) => redisClient.sendCommand(args),
   }),
-
   windowMs: 15 * 60 * 1000,
   max: 100,
-
   message: "Çok fazla istek gönderildi. Lütfen daha sonra tekrar deneyin.",
 });
 
-app.use(limiter);
-
 app.set("trust proxy", 1);
 app.use(helmet());
-
-const allowedOrigins = [
-  "http://localhost:3000",
-  "http://localhost:3001",
-  process.env.FRONTEND_URL,
-].filter(Boolean);
-
 app.use(cors());
-
-
 app.use(limiter);
 app.use(express.json({ limit: "10kb" }));
 
@@ -123,6 +109,9 @@ app.post("/api/appointments", async (req, res) => {
       endTime,
     } = req.body;
 
+    const rentShare = totalPrice / 2;
+    const employeeEarning = totalPrice - rentShare;
+
     if (
       !name ||
       !phone ||
@@ -187,6 +176,8 @@ app.post("/api/appointments", async (req, res) => {
       time,
       endTime,
       status: "pending",
+      rentShare,
+employeeEarning,
     });
 
     res.status(201).json({
@@ -198,6 +189,106 @@ app.post("/api/appointments", async (req, res) => {
 
     res.status(500).json({
       message: "Randevu kaydedilirken hata oluştu.",
+      error: error.message,
+    });
+  }
+  
+});
+
+app.post("/api/admin/appointments", verifyAdminToken, async (req, res) => {
+  try {
+    const {
+      name,
+      phone,
+      employee,
+      service,
+      totalDuration,
+      totalPrice,
+      date,
+      time,
+      endTime,
+    } = req.body;
+
+    if (
+      !name ||
+      !phone ||
+      !employee ||
+      !service ||
+      !date ||
+      !time ||
+      !totalDuration ||
+      !totalPrice
+    ) {
+      return res.status(400).json({
+        message: "Eksik randevu bilgisi gönderildi.",
+      });
+    }
+
+    const appointments = await Appointment.find({ employee, date });
+    const blockedSlots = await BlockedSlot.find({ employee, date });
+
+    const newStart = timeToMinutes(time);
+    const newEnd = newStart + Number(totalDuration);
+
+    const appointmentConflict = appointments.find((item) => {
+      const existingStart = timeToMinutes(item.time);
+      const existingEnd = existingStart + Number(item.totalDuration || 0);
+
+      return newStart < existingEnd && newEnd > existingStart;
+    });
+
+    if (appointmentConflict) {
+      return res.status(400).json({
+        message: "Bu saat aralığında başka bir randevu var.",
+      });
+    }
+
+    const blockedConflict = blockedSlots.find((slot) => {
+      const blockedStart = timeToMinutes(slot.startTime);
+      const blockedEnd = timeToMinutes(slot.endTime);
+
+      return newStart < blockedEnd && newEnd > blockedStart;
+    });
+
+    if (blockedConflict) {
+      return res.status(400).json({
+        message: "Bu saat aralığı kapalı.",
+      });
+    }
+
+    const rentShare = Number(totalPrice) / 2;
+    const employeeEarning = Number(totalPrice) - rentShare;
+
+    const appointment = await Appointment.create({
+      name,
+      phone,
+      employee,
+      service,
+      totalDuration,
+      totalPrice,
+      date,
+      time,
+      endTime,
+      status: "approved",
+      rentShare,
+      employeeEarning,
+    });
+
+    const serviceText = Array.isArray(service) ? service.join(", ") : service;
+
+    const message = `Sayin ${name}, ATA MEN'S CLUB randevunuz olusturuldu ve onaylandi. Tarih: ${date}, Saat: ${time}, Islem: ${serviceText}.`;
+
+    await sendSMS(phone, message);
+
+    res.status(201).json({
+      message: "Admin tarafından randevu oluşturuldu.",
+      appointment,
+    });
+  } catch (error) {
+    console.log("Admin randevu oluşturma hatası:", error.message);
+
+    res.status(500).json({
+      message: "Admin randevusu oluşturulurken hata oluştu.",
       error: error.message,
     });
   }
@@ -221,6 +312,42 @@ app.get("/api/appointments", async (req, res) => {
   }
 });
 
+app.put(
+  "/api/appointments/update-old-money-fields",
+  verifyAdminToken,
+  async (req, res) => {
+    try {
+      const appointments = await Appointment.find();
+
+      let updatedCount = 0;
+
+      for (const appointment of appointments) {
+        const totalPrice = Number(appointment.totalPrice || 0);
+
+        const rentShare = totalPrice / 2;
+        const employeeEarning = totalPrice - rentShare;
+
+        appointment.rentShare = rentShare;
+        appointment.employeeEarning = employeeEarning;
+
+        await appointment.save();
+
+        updatedCount++;
+      }
+
+      res.json({
+        message: "Eski randevular güncellendi.",
+        updatedCount,
+      });
+    } catch (error) {
+      res.status(500).json({
+        message: "Eski randevular güncellenemedi.",
+        error: error.message,
+      });
+    }
+  }
+);
+
 app.put("/api/appointments/:id/status", verifyAdminToken, async (req, res) => {
   try {
     const { status } = req.body;
@@ -232,10 +359,20 @@ app.put("/api/appointments/:id/status", verifyAdminToken, async (req, res) => {
     }
 
     const appointment = await Appointment.findByIdAndUpdate(
-      req.params.id,
-      { status },
-      { new: true }
-    );
+  req.params.id,
+  { status },
+  { new: true }
+);
+
+if (appointment && status === "approved") {
+  const serviceText = Array.isArray(appointment.service)
+    ? appointment.service.join(", ")
+    : appointment.service;
+
+  const message = `Sayin ${appointment.name}, ATA MEN'S CLUB randevunuz onaylandi. Tarih: ${appointment.date}, Saat: ${appointment.time}, Islem: ${serviceText}.`;
+
+  await sendSMS(appointment.phone, message);
+}
 
     if (!appointment) {
       return res.status(404).json({
@@ -265,7 +402,6 @@ app.put("/api/appointments/:id", verifyAdminToken, async (req, res) => {
       employee,
       service,
       totalDuration,
-      totalPrice,
       price,
       date,
       time,
@@ -322,19 +458,17 @@ app.put("/api/appointments/:id", verifyAdminToken, async (req, res) => {
     const updatedAppointment = await Appointment.findByIdAndUpdate(
       req.params.id,
       {
-        
-  name,
-  phone,
-  employee,
-  service,
-  totalDuration,
-  price: Number(price),
-  totalPrice: Number(price),
-  date,
-  time,
-  endTime,
-  status,
-
+        name,
+        phone,
+        employee,
+        service,
+        totalDuration,
+        price: Number(price),
+        totalPrice: Number(price),
+        date,
+        time,
+        endTime,
+        status,
       },
       { new: true }
     );
@@ -486,39 +620,88 @@ app.get("/api/reports/income", verifyAdminToken, async (req, res) => {
     let dailyIncome = 0;
     let monthlyIncome = 0;
     let yearlyIncome = 0;
+
+    let dailyRentShare = 0;
+    let monthlyRentShare = 0;
+    let yearlyRentShare = 0;
+
+    let dailyEmployeeEarning = 0;
+    let monthlyEmployeeEarning = 0;
+    let yearlyEmployeeEarning = 0;
+
     const totalAppointments = appointments.length;
 
     const employeeIncome = {};
+    const employeeRentShare = {};
+    const employeeEarning = {};
 
     appointments.forEach((appointment) => {
       const price = Number(appointment.totalPrice || 0);
+      const rent = Number(appointment.rentShare || 0);
+      const earning = Number(appointment.employeeEarning || 0);
+
       const appointmentDate = appointment.date;
+      const employee = appointment.employee || "Bilinmeyen";
 
       if (appointmentDate === todayString) {
         dailyIncome += price;
+        dailyRentShare += rent;
+        dailyEmployeeEarning += earning;
       }
 
-      if (appointmentDate && appointmentDate.startsWith(currentMonth)) {
+      if (
+        appointmentDate &&
+        appointmentDate.startsWith(currentMonth)
+      ) {
         monthlyIncome += price;
+        monthlyRentShare += rent;
+        monthlyEmployeeEarning += earning;
       }
 
-      if (appointmentDate && appointmentDate.startsWith(currentYear)) {
+      if (
+        appointmentDate &&
+        appointmentDate.startsWith(currentYear)
+      ) {
         yearlyIncome += price;
+        yearlyRentShare += rent;
+        yearlyEmployeeEarning += earning;
       }
 
-      if (!employeeIncome[appointment.employee]) {
-        employeeIncome[appointment.employee] = 0;
+      if (!employeeIncome[employee]) {
+        employeeIncome[employee] = 0;
       }
 
-      employeeIncome[appointment.employee] += price;
+      if (!employeeRentShare[employee]) {
+        employeeRentShare[employee] = 0;
+      }
+
+      if (!employeeEarning[employee]) {
+        employeeEarning[employee] = 0;
+      }
+
+      employeeIncome[employee] += price;
+      employeeRentShare[employee] += rent;
+      employeeEarning[employee] += earning;
     });
 
     res.json({
       dailyIncome,
       monthlyIncome,
       yearlyIncome,
+
+      dailyRentShare,
+      monthlyRentShare,
+      yearlyRentShare,
+
+      dailyEmployeeEarning,
+      monthlyEmployeeEarning,
+      yearlyEmployeeEarning,
+
       totalAppointments,
+
       employeeIncome,
+      employeeRentShare,
+      employeeEarning,
     });
   } catch (error) {
     res.status(500).json({
@@ -528,25 +711,70 @@ app.get("/api/reports/income", verifyAdminToken, async (req, res) => {
   }
 });
 
+
 app.post("/api/admin/login", async (req, res) => {
   try {
-    const { password } = req.body;
+    const { username, password } = req.body;
 
-    if (!password) {
-      return res.status(400).json({
-        message: "Şifre zorunludur.",
-      });
-    }
+    const users = [
+      {
+        username: "bilal",
+        password: "123456",
+        role: "admin",
+        employeeKey: "bilal",
+      },
+      {
+        username: "yasar",
+        password: "123456",
+        role: "user",
+        employeeKey: "yasar",
+      },
+      {
+        username: "adil",
+        password: "123456",
+        role: "user",
+        employeeKey: "adil",
+      },
+      {
+        username: "mustafa",
+        password: "123456",
+        role: "user",
+        employeeKey: "mustafa",
+      },
+      {
+        username: "murat",
+        password: "123456",
+        role: "user",
+        employeeKey: "murat",
+      },
+      {
+        username: "duygu",
+        password: "123456",
+        role: "user",
+        employeeKey: "duygu",
+      },
+    ];
 
-    if (password !== process.env.ADMIN_PASSWORD) {
+    const user = users.find(
+      (item) => item.username === username && item.password === password
+    );
+
+    if (!user) {
       return res.status(401).json({
-        message: "Şifre hatalı.",
+        message: "Kullanıcı adı veya şifre hatalı.",
       });
     }
 
-    const token = jwt.sign({ role: "admin" }, process.env.JWT_SECRET, {
-      expiresIn: "2h",
-    });
+    const token = jwt.sign(
+      {
+        role: user.role,
+        employeeKey: user.employeeKey,
+      },
+      process.env.JWT_SECRET,
+      {
+        expiresIn: "2h",
+      }
+    );
 
     res.json({
       message: "Giriş başarılı.",
@@ -560,9 +788,40 @@ app.post("/api/admin/login", async (req, res) => {
   }
 });
 
+cron.schedule("0 10 * * *", async () => {
+  try {
+    console.log("Hatırlatma SMS kontrolü başladı...");
+
+    const today = new Date();
+
+    const targetDate = new Date();
+    targetDate.setDate(today.getDate() - 30);
+
+    const formattedDate = targetDate.toISOString().split("T")[0];
+
+    const appointments = await Appointment.find({
+      status: "approved",
+      date: formattedDate,
+    });
+
+    for (const appointment of appointments) {
+      const message = `Sayin ${appointment.name}, ATA MEN'S CLUB olarak sizi tekrar gormekten mutluluk duyariz. Yeni randevunuzu olusturmak icin bizimle iletisime gecebilirsiniz.`;
+
+      await sendSMS(appointment.phone, message);
+
+      console.log(
+        `Hatirlatma SMS gonderildi: ${appointment.phone}`
+      );
+    }
+
+    console.log("Hatırlatma SMS kontrolü tamamlandı.");
+  } catch (error) {
+    console.log("Hatırlatma SMS hatası:", error.message);
+  }
+});
+
 const PORT = process.env.PORT || 5000;
 
 app.listen(PORT, () => {
   console.log(`Server çalışıyor: ${PORT}`);
 });
-

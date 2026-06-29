@@ -33,6 +33,16 @@ const appointmentSchema = new mongoose.Schema(
       default: 0,
     },
 
+    rentShare: {
+      type: Number,
+      default: 0,
+    },
+
+    employeeEarning: {
+      type: Number,
+      default: 0,
+    },
+
     date: {
       type: String,
       required: true,

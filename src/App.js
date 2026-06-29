@@ -155,6 +155,7 @@ function App() {
 
     const selectedStart = timeToMinutes(selectedTime);
     const selectedEnd = selectedStart + totalDuration;
+    if (selectedEnd > 22 * 60) return true;
 
     const appointmentConflict = appointments.some((item) => {
       if (item.employee !== employee || item.date !== date) return false;
@@ -518,11 +519,7 @@ function App() {
               {totalDuration > 0 ? `${totalDuration} dk` : "-"}
             </li>
 
-            <li>
-              <strong>Toplam Ücret:</strong>{" "}
-              {totalPrice > 0 ? `${totalPrice} TL` : "-"}
-            </li>
-
+            
             <li>
               <strong>Tarih:</strong> {date || "-"}
             </li>
