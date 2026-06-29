@@ -12,7 +12,22 @@ const { createClient } = require("redis");
 const { RedisStore } = require("rate-limit-redis");
 const { sendSMS } = require("./services/smsService");
 const cron = require("node-cron");
+
 const app = express();
+
+const calculateMoneyFields = (employee, totalPrice) => {
+  const priceNumber = Number(totalPrice || 0);
+
+  let rentShare = 0;
+
+  if (employee !== "Bilal Ata") {
+    rentShare = priceNumber / 2;
+  }
+
+  const employeeEarning = priceNumber - rentShare;
+
+  return { rentShare, employeeEarning };
+};
 
 const redisClient = createClient({
   url: process.env.REDIS_URL || "redis://redis:6379",
@@ -109,9 +124,6 @@ app.post("/api/appointments", async (req, res) => {
       endTime,
     } = req.body;
 
-    const rentShare = totalPrice / 2;
-    const employeeEarning = totalPrice - rentShare;
-
     if (
       !name ||
       !phone ||
@@ -126,15 +138,13 @@ app.post("/api/appointments", async (req, res) => {
       });
     }
 
-    const appointments = await Appointment.find({
+    const { rentShare, employeeEarning } = calculateMoneyFields(
       employee,
-      date,
-    });
+      totalPrice
+    );
 
-    const blockedSlots = await BlockedSlot.find({
-      employee,
-      date,
-    });
+    const appointments = await Appointment.find({ employee, date });
+    const blockedSlots = await BlockedSlot.find({ employee, date });
 
     const newStart = timeToMinutes(time);
     const newEnd = newStart + Number(totalDuration);
@@ -177,7 +187,7 @@ app.post("/api/appointments", async (req, res) => {
       endTime,
       status: "pending",
       rentShare,
-employeeEarning,
+      employeeEarning,
     });
 
     res.status(201).json({
@@ -192,7 +202,6 @@ employeeEarning,
       error: error.message,
     });
   }
-  
 });
 
 app.post("/api/admin/appointments", verifyAdminToken, async (req, res) => {
@@ -256,8 +265,10 @@ app.post("/api/admin/appointments", verifyAdminToken, async (req, res) => {
       });
     }
 
-    const rentShare = Number(totalPrice) / 2;
-    const employeeEarning = Number(totalPrice) - rentShare;
+    const { rentShare, employeeEarning } = calculateMoneyFields(
+      employee,
+      totalPrice
+    );
 
     const appointment = await Appointment.create({
       name,
@@ -322,10 +333,10 @@ app.put(
       let updatedCount = 0;
 
       for (const appointment of appointments) {
-        const totalPrice = Number(appointment.totalPrice || 0);
-
-        const rentShare = totalPrice / 2;
-        const employeeEarning = totalPrice - rentShare;
+        const { rentShare, employeeEarning } = calculateMoneyFields(
+          appointment.employee,
+          appointment.totalPrice
+        );
 
         appointment.rentShare = rentShare;
         appointment.employeeEarning = employeeEarning;
@@ -359,20 +370,20 @@ app.put("/api/appointments/:id/status", verifyAdminToken, async (req, res) => {
     }
 
     const appointment = await Appointment.findByIdAndUpdate(
-  req.params.id,
-  { status },
-  { new: true }
-);
+      req.params.id,
+      { status },
+      { new: true }
+    );
 
-if (appointment && status === "approved") {
-  const serviceText = Array.isArray(appointment.service)
-    ? appointment.service.join(", ")
-    : appointment.service;
+    if (appointment && status === "approved") {
+      const serviceText = Array.isArray(appointment.service)
+        ? appointment.service.join(", ")
+        : appointment.service;
 
-  const message = `Sayin ${appointment.name}, ATA MEN'S CLUB randevunuz onaylandi. Tarih: ${appointment.date}, Saat: ${appointment.time}, Islem: ${serviceText}.`;
+      const message = `Sayin ${appointment.name}, ATA MEN'S CLUB randevunuz onaylandi. Tarih: ${appointment.date}, Saat: ${appointment.time}, Islem: ${serviceText}.`;
 
-  await sendSMS(appointment.phone, message);
-}
+      await sendSMS(appointment.phone, message);
+    }
 
     if (!appointment) {
       return res.status(404).json({
@@ -455,6 +466,11 @@ app.put("/api/appointments/:id", verifyAdminToken, async (req, res) => {
       });
     }
 
+    const { rentShare, employeeEarning } = calculateMoneyFields(
+      employee,
+      price
+    );
+
     const updatedAppointment = await Appointment.findByIdAndUpdate(
       req.params.id,
       {
@@ -465,6 +481,8 @@ app.put("/api/appointments/:id", verifyAdminToken, async (req, res) => {
         totalDuration,
         price: Number(price),
         totalPrice: Number(price),
+        rentShare,
+        employeeEarning,
         date,
         time,
         endTime,
@@ -649,19 +667,13 @@ app.get("/api/reports/income", verifyAdminToken, async (req, res) => {
         dailyEmployeeEarning += earning;
       }
 
-      if (
-        appointmentDate &&
-        appointmentDate.startsWith(currentMonth)
-      ) {
+      if (appointmentDate && appointmentDate.startsWith(currentMonth)) {
         monthlyIncome += price;
         monthlyRentShare += rent;
         monthlyEmployeeEarning += earning;
       }
 
-      if (
-        appointmentDate &&
-        appointmentDate.startsWith(currentYear)
-      ) {
+      if (appointmentDate && appointmentDate.startsWith(currentYear)) {
         yearlyIncome += price;
         yearlyRentShare += rent;
         yearlyEmployeeEarning += earning;
@@ -710,7 +722,6 @@ app.get("/api/reports/income", verifyAdminToken, async (req, res) => {
     });
   }
 });
-
 
 app.post("/api/admin/login", async (req, res) => {
   try {
@@ -809,9 +820,7 @@ cron.schedule("0 10 * * *", async () => {
 
       await sendSMS(appointment.phone, message);
 
-      console.log(
-        `Hatirlatma SMS gonderildi: ${appointment.phone}`
-      );
+      console.log(`Hatirlatma SMS gonderildi: ${appointment.phone}`);
     }
 
     console.log("Hatırlatma SMS kontrolü tamamlandı.");
